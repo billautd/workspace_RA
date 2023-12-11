@@ -1,0 +1,129 @@
+import * as RA from "@retroachievements/api";
+import * as Common from "./common"
+import * as XLSX from "xlsx-js-style";
+
+export const consolesToIgnore: string[] = ["Events", "Hubs"];
+
+export const raColumns: XLSX.ColInfo[] = [{ wch: 30 }, { wch: 70 }, { wch: 15 }, { wch: 20 }, { wch: 20 }, { wch: 15 }]
+
+//AUTH
+export let auth: RA.AuthObject;
+
+/*************************************************** */
+/*********** MAIN CALL *******************************/
+/*************************************************** */
+export function getRAPromise(raUsername: string, raApiKey: string): Promise<Map<string, RA.GameList>> {
+    auth = RA.buildAuthorization({ userName: raUsername, webApiKey: raApiKey });
+
+    //Completed games
+    const completedGamesPromise: Promise<RA.UserCompletedGames> = getUserCompletedGames(auth);
+
+    //GAME LIST
+    const gameListPromise: Promise<Map<string, RA.GameList>> = getGameListPromise(auth)
+
+    //USER AWARDS
+    const userAwardsPromise: Promise<RA.UserAwards> = getUserAwards(auth)
+
+    return Promise.all([completedGamesPromise, gameListPromise, userAwardsPromise]).then(val => {
+        const completedGames: RA.UserCompletedGames = val[0];
+        const gameListMap: Map<string, RA.GameList> = val[1];
+        const userAwards: RA.UserAwards = val[2];
+        return writeRASheet(completedGames, userAwards, gameListMap);
+    });
+}
+
+/*************************************************** */
+/*********** WRITE SHEET ******************************/
+/*************************************************** */
+function writeRASheet(completedGames: RA.UserCompletedGames, userAwards: RA.UserAwards, gameListMap: Map<string, RA.GameList>): Promise<Map<string, RA.GameList>> {
+    console.log("Writing RA sheet...")
+    //GAMES SHEET
+    let gamesArray: any[][] = [[{ t: "s", v: "Console" }, { t: "s", v: "Name" }, { t: "s", v: "Completion status" }, { t: "s", v: "Earned achievements" }, { t: "s", v: "Total achievements" }, { t: "s", v: "Percentage" }, { t: "s", v: "APPID" }]];
+    gameListMap.forEach((gameList, consoleName) => {
+        for (const entity of gameList) {
+            const gameData: any[] = [{ t: "s", v: consoleName }, { t: "s", v: entity.title }];
+            let status: Common.CompletionStatusData | undefined;
+            if (userAwards.visibleUserAwards.some(award => award.awardType === "Mastery/Completion" && award.title === entity.title && award.consoleName === consoleName)) {
+                status = Common.completionStatus.get("Mastered")
+            }
+            else if (userAwards.visibleUserAwards.some(award => award.awardType === "Game Beaten" && award.title === entity.title && award.consoleName === consoleName)) {
+                status = Common.completionStatus.get("Beaten")
+            }
+            else if (completedGames.some(completedGame => completedGame.numAwarded > 0 && completedGame.title === entity.title && completedGame.consoleName === consoleName)) {
+                status = Common.completionStatus.get("Tried")
+            }
+            else {
+                status = Common.completionStatus.get("Not played")
+            }
+            gameData.push({ "v": status?.name, "s": status?.style })
+            let numAwarded: number | undefined;
+            if (status?.name === "Mastered") {
+                numAwarded = entity.numAchievements
+            } else if (status?.name === "Not played") {
+                numAwarded = 0;
+            } else {
+                const game: RA.UserCompletedGame | undefined = completedGames.find(game => game.consoleName === consoleName && game.title === entity.title)
+                numAwarded = game?.numAwarded;
+            }
+            gameData.push({ t: "n", v: numAwarded })
+            gameData.push({ t: "n", v: entity.numAchievements })
+            gameData.push({ t: "n", v: (numAwarded ? numAwarded : 0) / entity.numAchievements, z: "0.00%" })
+            gameData.push({ t: "n", v: entity.id })
+            gamesArray.push(gameData)
+        }
+    });
+    const gamesWs: XLSX.WorkSheet = XLSX.utils.aoa_to_sheet(gamesArray);
+    gamesWs['!cols'] = raColumns
+    XLSX.utils.book_append_sheet(Common.wb, gamesWs, "RAGames");
+
+
+    return new Promise((resolve) => resolve(gameListMap));
+}
+
+export function getConsoleIds(auth: RA.AuthObject): Promise<RA.ConsoleId[]> {
+    return RA.getConsoleIds(auth).then(consoleIds => {
+        //Remove consoles to ignore
+        consolesToIgnore.forEach(toIgnore => {
+            const toDelete: RA.ConsoleId | undefined = consoleIds.find(val => toIgnore === val.name);
+            if (toDelete) {
+                consoleIds.splice(consoleIds.indexOf(toDelete), 1);
+            }
+        });
+        return new Promise((resolve) => resolve(consoleIds));
+    })
+}
+
+export function getUserCompletedGames(auth: RA.AuthObject): Promise<RA.UserCompletedGames> {
+    return RA.getUserCompletedGames(auth, { userName: auth.userName })
+}
+
+export function getUserAwards(auth: RA.AuthObject): Promise<RA.UserAwards> {
+    return RA.getUserAwards(auth, { userName: auth.userName })
+}
+
+export function getGameListPromise(auth: RA.AuthObject): Promise<Map<string, RA.GameList>> {
+    const consoleDataListPromise: Promise<RA.ConsoleId[]> = getConsoleIds(auth);
+    return consoleDataListPromise.then(async consoleDataList => {
+        let total: number = 0;
+        const gameListMap: Map<string, RA.GameList> = new Map();
+        consoleDataList = [{ id: 1, name: "Mega Drive" }]
+        for (let i = 0; i < consoleDataList.length; i++) {
+            const consoleData: RA.ConsoleId = consoleDataList[i];
+            console.log("GAME LIST : " + (i + 1) + "/" + consoleDataList.length);
+            //Create promise for given console data, add to gameListPromises list
+            RA.getGameList(auth, {
+                consoleId: consoleData.id,
+                shouldOnlyRetrieveGamesWithAchievements: true,
+                shouldRetrieveGameHashes: false
+            }).then(gameList => {
+                console.log("CONSOLE : " + consoleData.name + ", GAMES : " + gameList.length);
+                total += gameList.length;
+                console.log("TOTAL : " + total);
+                gameListMap.set(consoleData.name, gameList);
+                console.log("\n")
+            });
+            await Common.timer(500);
+        }
+        return new Promise(resolve => { resolve(gameListMap) });
+    });
+}
