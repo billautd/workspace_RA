@@ -1,6 +1,5 @@
 *node_modules*
 *.js
-common/*.js
 *.xlsx
 *.xlsm
 *~lock*

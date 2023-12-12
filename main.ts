@@ -4,7 +4,7 @@ import * as CommonSteam from "./common/commonSteam"
 import * as CommonRA from "./common/commonRA"
 import * as RA from "@retroachievements/api"
 
-// const numberOfRandomGames: number = 5
+const numberOfRandomGames: number = 5
 
 let fullscan: string = "all"
 let raUsername: string = ""
@@ -82,13 +82,11 @@ Promise.all(promisesArray).then(async val => {
     }
     const consoleDataSheet: XLSX.WorkSheet = await createConsoleDataSheet();
     const completionDataSheet: XLSX.WorkSheet = createCompletionDataSheet();
-    //TODO
-    // const randomGamesSheet: XLSX.WorkSheet = createRandomGamesSheet();
+    const randomGamesSheet: XLSX.WorkSheet = createRandomGamesSheet();
 
     XLSX.utils.book_append_sheet(Common.wb, consoleDataSheet, "ConsoleData")
     XLSX.utils.book_append_sheet(Common.wb, completionDataSheet, "CompletionData")
-    //TODO
-    // XLSX.utils.book_append_sheet(Common.wb, randomGamesSheet, "RandomGames")
+    XLSX.utils.book_append_sheet(Common.wb, randomGamesSheet, "RandomGames")
 
     XLSX.writeFile(Common.wb, "Achievements.xlsx");
 })
@@ -157,7 +155,40 @@ function createCompletionDataSheet(): XLSX.WorkSheet {
     return completionDataWs;
 }
 
-//TODO
-// function createRandomGamesSheet(): XLSX.WorkSheet {
+function createRandomGamesSheet(): XLSX.WorkSheet {
+    let randomGamesArray: any[][] = []
+    randomGamesArray[0] = [{ t: "s", v: "RA" }]
+    randomGamesArray[1] = [{ t: "s", v: "Index" }].concat(CommonRA.raHeader)
+    randomGamesArray[2 + numberOfRandomGames] = [{ t: "s", v: "Steam" }]
+    randomGamesArray[3 + numberOfRandomGames] = [{ t: "s", v: "Index" }].concat(CommonSteam.steamHeader)
 
-// }
+    for (let i = 0; i < numberOfRandomGames; i++) {
+        //RA
+        randomGamesArray[2 + i] = []
+        randomGamesArray[2 + i] = [{ t: "n", f: "RANDBETWEEN(1,VALUE(CompletionData!D2))" },
+        { t: "s", f: "INDEX(RAGames!A2:A20000, A" + (i + 3) },
+        { t: "s", f: "INDEX(RAGames!B2:B20000, A" + (i + 3) },
+        { t: "s", f: "INDEX(RAGames!C2:C20000, A" + (i + 3) },
+        { t: "s", f: "INDEX(RAGames!D2:D20000, A" + (i + 3) },
+        { t: "s", f: "INDEX(RAGames!E2:E20000, A" + (i + 3) },
+        { t: "s", f: "INDEX(RAGames!F2:F20000, A" + (i + 3) },
+        { t: "s", f: "INDEX(RAGames!G2:G20000, A" + (i + 3) }]
+
+        //Steam
+        randomGamesArray[3 + numberOfRandomGames + i] = []
+        randomGamesArray[3 + numberOfRandomGames + i] = [
+            { t: "n", f: "RANDBETWEEN(1,VALUE(CompletionData!I2))" },
+            { t: "s", v: "Steam" },
+            { t: "s", f: "INDEX(SteamGames!A2:A20000, A" + (i + 3) },
+            { t: "s", f: "INDEX(SteamGames!B2:B20000, A" + (i + 3) },
+            { t: "s", f: "INDEX(SteamGames!C2:C20000, A" + (i + 3) },
+            { t: "s", f: "INDEX(SteamGames!D2:D20000, A" + (i + 3) },
+            { t: "s", f: "INDEX(SteamGames!E2:E20000, A" + (i + 3) },
+            { t: "s", f: "INDEX(SteamGames!F2:F20000, A" + (i + 3) }]
+    }
+
+    //Add sheet
+    const randomGamesWs: XLSX.WorkSheet = XLSX.utils.aoa_to_sheet(randomGamesArray);
+    randomGamesWs['!cols'] = [{ wch: 20 }, { wch: 30 }, { wch: 50 }, { wch: 20 }, { wch: 20 }, { wch: 20 }, { wch: 15 }, { wch: 15 }, { wch: 15 }]
+    return randomGamesWs;
+}

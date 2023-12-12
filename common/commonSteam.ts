@@ -3,6 +3,8 @@ import * as XLSX from "xlsx-js-style";
 
 export const steamColumns: XLSX.ColInfo[] = [{ wch: 50 }, { wch: 15 }, { wch: 20 }, { wch: 20 }, { wch: 15 }]
 
+export const steamHeader: any[] = [{ t: "s", v: "Name" }, { t: "s", v: "Completion status" }, { t: "s", v: "Earned achievements" }, { t: "s", v: "Total achievements" }, { t: "s", v: "Percentage" }, { t: "s", v: "APPID" }]
+
 //Data used to get achievement data from steam game
 export interface OwnedGame {
     name: string,
@@ -82,7 +84,7 @@ export async function getSteamPromise(steamId: string, steamApiKey: string): Pro
 
 function writeSteamSheet(ownedGames: OwnedGamesResponse): Promise<OwnedGamesResponse> {
     console.log("Writing Steam sheet...")
-    let gamesArray = [[{ t: "s", v: "Name" }, { t: "s", v: "Completion status" }, { t: "s", v: "Earned achievements" }, { t: "s", v: "Total achievements" }, { t: "s", v: "Percentage" }, { t: "s", v: "APPID" }]]
+    let gamesArray = [steamHeader]
     for (let ownedGame of ownedGames) {
         const gameDataArray: any[] = [{ t: "s", v: ownedGame.name }]
         let status: Common.CompletionStatusData | undefined;

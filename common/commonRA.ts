@@ -6,6 +6,8 @@ export const consolesToIgnore: string[] = ["Events", "Hubs"];
 
 export const raColumns: XLSX.ColInfo[] = [{ wch: 30 }, { wch: 70 }, { wch: 15 }, { wch: 20 }, { wch: 20 }, { wch: 15 }]
 
+export const raHeader: any[] = [{ t: "s", v: "Console" }, { t: "s", v: "Name" }, { t: "s", v: "Completion status" }, { t: "s", v: "Earned achievements" }, { t: "s", v: "Total achievements" }, { t: "s", v: "Percentage" }, { t: "s", v: "APPID" }]
+
 //AUTH
 export let auth: RA.AuthObject;
 
@@ -38,7 +40,7 @@ export function getRAPromise(raUsername: string, raApiKey: string): Promise<Map<
 function writeRASheet(completedGames: RA.UserCompletedGames, userAwards: RA.UserAwards, gameListMap: Map<string, RA.GameList>): Promise<Map<string, RA.GameList>> {
     console.log("Writing RA sheet...")
     //GAMES SHEET
-    let gamesArray: any[][] = [[{ t: "s", v: "Console" }, { t: "s", v: "Name" }, { t: "s", v: "Completion status" }, { t: "s", v: "Earned achievements" }, { t: "s", v: "Total achievements" }, { t: "s", v: "Percentage" }, { t: "s", v: "APPID" }]];
+    let gamesArray: any[][] = [raHeader];
     gameListMap.forEach((gameList, consoleName) => {
         for (const entity of gameList) {
             const gameData: any[] = [{ t: "s", v: consoleName }, { t: "s", v: entity.title }];
