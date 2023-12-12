@@ -1,9 +1,14 @@
 import * as Common from "./common"
 import * as XLSX from "xlsx-js-style";
 
-export const steamColumns: XLSX.ColInfo[] = [{ wch: 50 }, { wch: 15 }, { wch: 20 }, { wch: 20 }, { wch: 15 }]
+export const steamColumns: XLSX.ColInfo[] = [{ wch: 50 }, { wch: 20 }, { wch: 20 }, { wch: 20 }, { wch: 15 }, { wch: 15 }]
 
-export const steamHeader: any[] = [{ t: "s", v: "Name" }, { t: "s", v: "Completion status" }, { t: "s", v: "Earned achievements" }, { t: "s", v: "Total achievements" }, { t: "s", v: "Percentage" }, { t: "s", v: "APPID" }]
+export const steamHeader: any[] = [{ t: "s", v: "Name", s: Common.headerStyle2 },
+{ t: "s", v: "Completion status", s: Common.headerStyle2 },
+{ t: "s", v: "Earned achievements", s: Common.headerStyle2 },
+{ t: "s", v: "Total achievements", s: Common.headerStyle2 },
+{ t: "s", v: "Percentage", s: Common.headerStyle2 },
+{ t: "s", v: "APPID", s: Common.headerStyle2 }]
 
 //Data used to get achievement data from steam game
 export interface OwnedGame {
@@ -69,7 +74,7 @@ export async function getSteamPromise(steamId: string, steamApiKey: string): Pro
     for (let i = 0; i < jsonRes.games.length; i++) {
         const ownedGame: OwnedGame = parseJsonToOwnedGame(jsonRes.games[i])
         console.log("PROCESSING " + (i + 1) + "/" + jsonRes.games.length + " : " + ownedGame.name + ", " + ownedGame.appId);
-        // const achievementsData: any = (await getAchievements(steamId, steamApiKey, ownedGame.appId)).playerstats.achievements || {};
+        const achievementsData: any = (await getAchievements(steamId, steamApiKey, ownedGame.appId)).playerstats.achievements || {};
         parseGameAchievementData(achievementsData, ownedGame)
         if (ownedGame.achievements.length === 0) {
             console.log("No achievements")

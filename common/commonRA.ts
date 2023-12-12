@@ -4,19 +4,27 @@ import * as XLSX from "xlsx-js-style";
 
 export const consolesToIgnore: string[] = ["Events", "Hubs"];
 
-export const raColumns: XLSX.ColInfo[] = [{ wch: 30 }, { wch: 70 }, { wch: 15 }, { wch: 20 }, { wch: 20 }, { wch: 15 }]
+export const raColumns: XLSX.ColInfo[] = [{ wch: 30 }, { wch: 70 }, { wch: 20 }, { wch: 20 }, { wch: 20 }, { wch: 15 }, { wch: 15 }]
 
-export const raHeader: any[] = [{ t: "s", v: "Console" }, { t: "s", v: "Name" }, { t: "s", v: "Completion status" }, { t: "s", v: "Earned achievements" }, { t: "s", v: "Total achievements" }, { t: "s", v: "Percentage" }, { t: "s", v: "APPID" }]
+export const raHeader: any[] = [{ t: "s", v: "Console", s: Common.headerStyle2 },
+{ t: "s", v: "Name", s: Common.headerStyle2 },
+{ t: "s", v: "Completion status", s: Common.headerStyle2 },
+{ t: "s", v: "Earned achievements", s: Common.headerStyle2 },
+{ t: "s", v: "Total achievements", s: Common.headerStyle2 },
+{ t: "s", v: "Percentage", s: Common.headerStyle2 },
+{ t: "s", v: "APPID", s: Common.headerStyle2 }]
 
 //AUTH
 export let auth: RA.AuthObject;
+
+export function setAuth(pAuth: RA.AuthObject) {
+    auth = pAuth
+}
 
 /*************************************************** */
 /*********** MAIN CALL *******************************/
 /*************************************************** */
 export function getRAPromise(raUsername: string, raApiKey: string): Promise<Map<string, RA.GameList>> {
-    auth = RA.buildAuthorization({ userName: raUsername, webApiKey: raApiKey });
-
     //Completed games
     const completedGamesPromise: Promise<RA.UserCompletedGames> = getUserCompletedGames(auth);
 
@@ -57,7 +65,7 @@ function writeRASheet(completedGames: RA.UserCompletedGames, userAwards: RA.User
             else {
                 status = Common.completionStatus.get("Not played")
             }
-            gameData.push({ "v": status?.name, "s": status?.style })
+            gameData.push({ v: status?.name, s: status?.style })
             let numAwarded: number | undefined;
             if (status?.name === "Mastered") {
                 numAwarded = entity.numAchievements
@@ -108,7 +116,7 @@ export function getGameListPromise(auth: RA.AuthObject): Promise<Map<string, RA.
     return consoleDataListPromise.then(async consoleDataList => {
         let total: number = 0;
         const gameListMap: Map<string, RA.GameList> = new Map();
-        consoleDataList = [{ id: 1, name: "Mega Drive" }]
+        // consoleDataList = [{ id: 1, name: "Mega Drive" }]
         for (let i = 0; i < consoleDataList.length; i++) {
             const consoleData: RA.ConsoleId = consoleDataList[i];
             console.log("GAME LIST : " + (i + 1) + "/" + consoleDataList.length);

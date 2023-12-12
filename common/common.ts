@@ -18,6 +18,9 @@ export const completionStatus: Map<string, CompletionStatusData> = new Map([
     ["No achievements", { name: "No achievements", style: { fill: { fgColor: { rgb: "444444" } } } }],
 ])
 
+export const headerStyle1 = { font: { bold: true, sz: 13, color: { rgb: "990099" }, underline: true } };
+export const headerStyle2 = { font: { bold: true, sz: 11, underline: true } };
+
 
 
 export const completionStatusLength: number = completionStatus.size;
