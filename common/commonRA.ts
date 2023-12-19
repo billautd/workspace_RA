@@ -26,13 +26,13 @@ export function setAuth(pAuth: RA.AuthObject) {
 /*************************************************** */
 export function getRAPromise(raUsername: string, raApiKey: string): Promise<Map<string, RA.GameList>> {
     //Completed games
-    const completedGamesPromise: Promise<RA.UserCompletedGames> = getUserCompletedGames(auth);
+    const completedGamesPromise: Promise<RA.UserCompletedGames> = getUserCompletedGames();
 
     //GAME LIST
-    const gameListPromise: Promise<Map<string, RA.GameList>> = getGameListPromise(auth)
+    const gameListPromise: Promise<Map<string, RA.GameList>> = getGameListPromise()
 
     //USER AWARDS
-    const userAwardsPromise: Promise<RA.UserAwards> = getUserAwards(auth)
+    const userAwardsPromise: Promise<RA.UserAwards> = getUserAwards()
 
     return Promise.all([completedGamesPromise, gameListPromise, userAwardsPromise]).then(val => {
         const completedGames: RA.UserCompletedGames = val[0];
@@ -50,16 +50,19 @@ function writeRASheet(completedGames: RA.UserCompletedGames, userAwards: RA.User
     //GAMES SHEET
     let gamesArray: any[][] = [raHeader];
     gameListMap.forEach((gameList, consoleName) => {
-        for (const entity of gameList) {
+        for (let i = 0; i < gameList.length; i++) {
+            const index: number = i + 2;
+            const entity = gameList[i]
             const gameData: any[] = [{ t: "s", v: consoleName }, { t: "s", v: entity.title }];
             let status: Common.CompletionStatusData | undefined;
+            //Cannot check for game id, we then take (console, title) as key
             if (userAwards.visibleUserAwards.some(award => award.awardType === "Mastery/Completion" && award.title === entity.title && award.consoleName === consoleName)) {
                 status = Common.completionStatus.get("Mastered")
             }
             else if (userAwards.visibleUserAwards.some(award => award.awardType === "Game Beaten" && award.title === entity.title && award.consoleName === consoleName)) {
                 status = Common.completionStatus.get("Beaten")
             }
-            else if (completedGames.some(completedGame => completedGame.numAwarded > 0 && completedGame.title === entity.title && completedGame.consoleName === consoleName)) {
+            else if (completedGames.some(completedGame => completedGame.numAwarded > 0 && completedGame.gameId === entity.id)) {
                 status = Common.completionStatus.get("Tried")
             }
             else {
@@ -77,7 +80,7 @@ function writeRASheet(completedGames: RA.UserCompletedGames, userAwards: RA.User
             }
             gameData.push({ t: "n", v: numAwarded })
             gameData.push({ t: "n", v: entity.numAchievements })
-            gameData.push({ t: "n", v: (numAwarded ? numAwarded : 0) / entity.numAchievements, z: "0.00%" })
+            gameData.push({ t: "n", f: "D" + index + "/E" + index, z: "0.00%" })
             gameData.push({ t: "n", v: entity.id })
             gamesArray.push(gameData)
         }
@@ -90,7 +93,7 @@ function writeRASheet(completedGames: RA.UserCompletedGames, userAwards: RA.User
     return new Promise((resolve) => resolve(gameListMap));
 }
 
-export function getConsoleIds(auth: RA.AuthObject): Promise<RA.ConsoleId[]> {
+export function getConsoleIds(): Promise<RA.ConsoleId[]> {
     return RA.getConsoleIds(auth).then(consoleIds => {
         //Remove consoles to ignore
         consolesToIgnore.forEach(toIgnore => {
@@ -103,16 +106,16 @@ export function getConsoleIds(auth: RA.AuthObject): Promise<RA.ConsoleId[]> {
     })
 }
 
-export function getUserCompletedGames(auth: RA.AuthObject): Promise<RA.UserCompletedGames> {
+export function getUserCompletedGames(): Promise<RA.UserCompletedGames> {
     return RA.getUserCompletedGames(auth, { userName: auth.userName })
 }
 
-export function getUserAwards(auth: RA.AuthObject): Promise<RA.UserAwards> {
+export function getUserAwards(): Promise<RA.UserAwards> {
     return RA.getUserAwards(auth, { userName: auth.userName })
 }
 
-export function getGameListPromise(auth: RA.AuthObject): Promise<Map<string, RA.GameList>> {
-    const consoleDataListPromise: Promise<RA.ConsoleId[]> = getConsoleIds(auth);
+export function getGameListPromise(): Promise<Map<string, RA.GameList>> {
+    const consoleDataListPromise: Promise<RA.ConsoleId[]> = getConsoleIds();
     return consoleDataListPromise.then(async consoleDataList => {
         let total: number = 0;
         const gameListMap: Map<string, RA.GameList> = new Map();
@@ -136,4 +139,8 @@ export function getGameListPromise(auth: RA.AuthObject): Promise<Map<string, RA.
         }
         return new Promise(resolve => { resolve(gameListMap) });
     });
+}
+
+export async function getRecentGamesPromise(): Promise<RA.UserRecentlyPlayedGames> {
+    return await RA.getUserRecentlyPlayedGames(auth, { userName: auth.userName, count: 50 });
 }
