@@ -1,5 +1,7 @@
 import * as Common from "./common"
 import * as XLSX from "xlsx-js-style";
+import * as fs from "fs";
+import * as rd from "readline";
 
 export const steamColumns: XLSX.ColInfo[] = [{ wch: 50 }, { wch: 20 }, { wch: 20 }, { wch: 20 }, { wch: 15 }, { wch: 15 }]
 
@@ -87,8 +89,18 @@ export async function getSteamPromise(steamId: string, steamApiKey: string): Pro
     return writeSteamSheet(ownedGamesResponse)
 }
 
-function writeSteamSheet(ownedGames: OwnedGamesResponse): Promise<OwnedGamesResponse> {
+async function getSteamBeaten(): Promise<string[]> {
+    let beatenGames: string[] = [];
+    const reader = rd.createInterface(fs.createReadStream("./SteamBeaten.txt"));
+    for await (const l of reader) {
+        beatenGames.push(l)
+    }
+    return beatenGames
+}
+
+async function writeSteamSheet(ownedGames: OwnedGamesResponse): Promise<OwnedGamesResponse> {
     console.log("Writing Steam sheet...")
+    let steamBeatenGames: string[] = await getSteamBeaten()
     let gamesArray = [steamHeader]
     for (let ownedGame of ownedGames) {
         const gameDataArray: any[] = [{ t: "s", v: ownedGame.name }]
@@ -99,9 +111,13 @@ function writeSteamSheet(ownedGames: OwnedGamesResponse): Promise<OwnedGamesResp
         else if (ownedGame.achievements.every((a) => a.achieved)) {
             status = Common.completionStatus.get("Mastered")
         }
+        else if (steamBeatenGames.find(n => n === ownedGame.name)) {
+            status = Common.completionStatus.get("Beaten")
+        }
         else if (ownedGame.achievements.some((a) => a.achieved)) {
             status = Common.completionStatus.get("Tried")
-        } else {
+        }
+        else {
             status = Common.completionStatus.get("Not played")
         }
         gameDataArray.push({ "v": status?.name, "s": status?.style })

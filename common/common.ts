@@ -1,5 +1,4 @@
 import * as XLSX from "xlsx-js-style";
-import { OwnedGame } from "./commonSteam";
 
 export function timer(ms: number): Promise<void> {
     return new Promise(res => setTimeout(res, ms));
