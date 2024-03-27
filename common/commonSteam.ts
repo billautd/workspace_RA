@@ -73,6 +73,7 @@ export async function getSteamPromise(steamId: string, steamApiKey: string): Pro
 
     const ownedGamesResponse: OwnedGamesResponse = [];
     const achievementsData: any = {}
+    // for (let i = 0; i < 50; i++) {
     for (let i = 0; i < jsonRes.games.length; i++) {
         const ownedGame: OwnedGame = parseJsonToOwnedGame(jsonRes.games[i])
         console.log("PROCESSING " + (i + 1) + "/" + jsonRes.games.length + " : " + ownedGame.name + ", " + ownedGame.appId);
@@ -89,7 +90,7 @@ export async function getSteamPromise(steamId: string, steamApiKey: string): Pro
     return writeSteamSheet(ownedGamesResponse)
 }
 
-async function getSteamBeaten(): Promise<string[]> {
+async function getLocalSteamBeaten(): Promise<string[]> {
     let beatenGames: string[] = [];
     const reader = rd.createInterface(fs.createReadStream("./SteamBeaten.txt"));
     for await (const l of reader) {
@@ -98,37 +99,67 @@ async function getSteamBeaten(): Promise<string[]> {
     return beatenGames
 }
 
+async function getLocalSteamMastered(): Promise<string[]> {
+    let masteredGames: string[] = [];
+    const reader = rd.createInterface(fs.createReadStream("./SteamMastered.txt"));
+    for await (const l of reader) {
+        masteredGames.push(l)
+    }
+    return masteredGames
+}
+
+
 async function writeSteamSheet(ownedGames: OwnedGamesResponse): Promise<OwnedGamesResponse> {
     console.log("Writing Steam sheet...")
-    let steamBeatenGames: string[] = await getSteamBeaten()
+    let localSteamBeatenGames: string[] = await getLocalSteamBeaten()
+    let localSteamMasteredGames: string[] = await getLocalSteamMastered()
     let gamesArray = [steamHeader]
     for (let ownedGame of ownedGames) {
         const gameDataArray: any[] = [{ t: "s", v: ownedGame.name }]
         let status: Common.CompletionStatusData | undefined;
-        if (ownedGame.achievements.length === 0) {
+        let isNoAchievements: boolean = ownedGame.achievements.length === 0;
+        let isInLocalBeaten = localSteamBeatenGames.find(n => n === ownedGame.name)
+        let isInLocalMastered = localSteamMasteredGames.find(n => n === ownedGame.name)
+        let isTried = !isNoAchievements && ownedGame.achievements.some((a) => a.achieved)
+        let isMastered = !isNoAchievements && ownedGame.achievements.every((a) => a.achieved)
+
+        if (isNoAchievements && !isInLocalBeaten && !isInLocalMastered) {
             status = Common.completionStatus.get("No achievements");
         }
-        else if (ownedGame.achievements.every((a) => a.achieved)) {
+        else if (isMastered || isInLocalMastered) {
             status = Common.completionStatus.get("Mastered")
         }
-        else if (steamBeatenGames.find(n => n === ownedGame.name)) {
+        else if (isInLocalBeaten) {
             status = Common.completionStatus.get("Beaten")
         }
-        else if (ownedGame.achievements.some((a) => a.achieved)) {
+        else if (isTried) {
             status = Common.completionStatus.get("Tried")
         }
         else {
             status = Common.completionStatus.get("Not played")
         }
+        console.log(ownedGame.appId + " -> " + (isNoAchievements ? "No achievements : " : "") + status?.name)
         gameDataArray.push({ "v": status?.name, "s": status?.style })
-        let numAwarded: number = ownedGame.achievements.filter(a => a.achieved).length;
-        gameDataArray.push({ t: "n", v: numAwarded })
-        gameDataArray.push({ t: "n", v: ownedGame.achievements.length })
-        if (status?.name !== "No achievements") {
-            gameDataArray.push({ t: "n", v: numAwarded / ownedGame.achievements.length, z: "0.00%" })
+        let numAwarded: number;
+        let totalAchievements: number;
+        let completionPercentage: number = 0;
+        if (isNoAchievements) {
+            numAwarded = 0;
+            totalAchievements = 0;
+            if (isInLocalBeaten) {
+                completionPercentage = 0.5
+            }
+            else if (isInLocalMastered) {
+                completionPercentage = 1
+            }
         } else {
-            gameDataArray.push({})
+            numAwarded = ownedGame.achievements.filter(a => a.achieved).length;
+            totalAchievements = ownedGame.achievements.length;
+            completionPercentage = numAwarded / ownedGame.achievements.length;
         }
+        gameDataArray.push({ t: "n", v: numAwarded })
+        gameDataArray.push({ t: "n", v: totalAchievements })
+        gameDataArray.push({ t: "n", v: completionPercentage, z: "0.00%" })
         gameDataArray.push({ t: "n", v: ownedGame.appId })
         gamesArray.push(gameDataArray)
     }
