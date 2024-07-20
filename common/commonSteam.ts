@@ -76,14 +76,15 @@ export async function getSteamPromise(steamId: string, steamApiKey: string): Pro
     // for (let i = 0; i < 50; i++) {
     for (let i = 0; i < jsonRes.games.length; i++) {
         const ownedGame: OwnedGame = parseJsonToOwnedGame(jsonRes.games[i])
-        console.log("PROCESSING " + (i + 1) + "/" + jsonRes.games.length + " : " + ownedGame.name + ", " + ownedGame.appId);
         const achievementsData: any = (await getAchievements(steamId, steamApiKey, ownedGame.appId)).playerstats.achievements || {};
         parseGameAchievementData(achievementsData, ownedGame)
+        let statusLog = "";
         if (ownedGame.achievements.length === 0) {
-            console.log("No achievements")
+            statusLog = "No achievements";
         } else {
-            console.log("Achievements : " + ownedGame.achievements.length)
+            statusLog = ("Achievements : " + ownedGame.achievements.length);
         }
+        console.log("PROCESSING " + (i + 1) + "/" + jsonRes.games.length + " : " + ownedGame.name + " (" + ownedGame.appId + ") -> " + statusLog);
         ownedGamesResponse.push(ownedGame)
     }
 
@@ -92,7 +93,7 @@ export async function getSteamPromise(steamId: string, steamApiKey: string): Pro
 
 async function getLocalSteamBeaten(): Promise<string[]> {
     let beatenGames: string[] = [];
-    const reader = rd.createInterface(fs.createReadStream("./SteamBeaten.txt"));
+    const reader = rd.createInterface(fs.createReadStream("Files/SteamBeaten.txt"));
     for await (const l of reader) {
         beatenGames.push(l)
     }
@@ -101,7 +102,7 @@ async function getLocalSteamBeaten(): Promise<string[]> {
 
 async function getLocalSteamMastered(): Promise<string[]> {
     let masteredGames: string[] = [];
-    const reader = rd.createInterface(fs.createReadStream("./SteamMastered.txt"));
+    const reader = rd.createInterface(fs.createReadStream("Files/SteamMastered.txt"));
     for await (const l of reader) {
         masteredGames.push(l)
     }

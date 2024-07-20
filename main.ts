@@ -7,9 +7,6 @@ import * as CommonPSVita from "./common/commonPSVita"
 import * as RA from "@retroachievements/api"
 import * as SheetService from "./mainSheetService"
 
-const numberOfRandomGames: number = 5
-const numberOfPlayingGames: number = 3
-
 let raUsername: string = ""
 let raApiKey: string = ""
 let steamId: string = ""
@@ -79,5 +76,5 @@ Promise.all(promisesArray).then(async val => {
     XLSX.utils.book_append_sheet(Common.wb, consoleDataSheet, "ConsoleData")
     XLSX.utils.book_append_sheet(Common.wb, completionDataSheet, "CompletionData")
 
-    XLSX.writeFile(Common.wb, "Achievements.xlsx");
+    XLSX.writeFile(Common.wb, "Files/Achievements.xlsx");
 })

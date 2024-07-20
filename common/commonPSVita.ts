@@ -14,7 +14,7 @@ export async function getPSVitaPromise(): Promise<string[]> {
 
 async function getPSVitaGames(): Promise<string[]> {
     let psVitaGames: string[] = [];
-    const reader = rd.createInterface(fs.createReadStream("./PSVitaGames.txt"));
+    const reader = rd.createInterface(fs.createReadStream("Files/PSVitaGames.txt"));
     for await (const l of reader) {
         psVitaGames.push(l)
     }
@@ -23,7 +23,7 @@ async function getPSVitaGames(): Promise<string[]> {
 
 async function getPSVitaBeaten(): Promise<string[]> {
     let psVitaBeaten: string[] = [];
-    const reader = rd.createInterface(fs.createReadStream("./PSVitaGamesBeaten.txt"));
+    const reader = rd.createInterface(fs.createReadStream("Files/PSVitaGamesBeaten.txt"));
     for await (const l of reader) {
         psVitaBeaten.push(l)
     }
@@ -32,7 +32,7 @@ async function getPSVitaBeaten(): Promise<string[]> {
 
 async function getPSVitaMastered(): Promise<string[]> {
     let psVitaMastered: string[] = [];
-    const reader = rd.createInterface(fs.createReadStream("./PSVitaGamesMastered.txt"));
+    const reader = rd.createInterface(fs.createReadStream("Files/PSVitaGamesMastered.txt"));
     for await (const l of reader) {
         psVitaMastered.push(l)
     }

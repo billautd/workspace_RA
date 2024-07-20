@@ -14,7 +14,7 @@ export async function getPS3Promise(): Promise<string[]> {
 
 async function getPS3Games(): Promise<string[]> {
     let ps3Games: string[] = [];
-    const reader = rd.createInterface(fs.createReadStream("./PS3Games.txt"));
+    const reader = rd.createInterface(fs.createReadStream("Files/PS3Games.txt"));
     for await (const l of reader) {
         ps3Games.push(l)
     }
@@ -23,7 +23,7 @@ async function getPS3Games(): Promise<string[]> {
 
 async function getPS3Beaten(): Promise<string[]> {
     let ps3Beaten: string[] = [];
-    const reader = rd.createInterface(fs.createReadStream("./PS3GamesBeaten.txt"));
+    const reader = rd.createInterface(fs.createReadStream("Files/PS3GamesBeaten.txt"));
     for await (const l of reader) {
         ps3Beaten.push(l)
     }
@@ -32,7 +32,7 @@ async function getPS3Beaten(): Promise<string[]> {
 
 async function getPS3Mastered(): Promise<string[]> {
     let ps3Mastered: string[] = [];
-    const reader = rd.createInterface(fs.createReadStream("./PS3GamesMastered.txt"));
+    const reader = rd.createInterface(fs.createReadStream("Files/PS3GamesMastered.txt"));
     for await (const l of reader) {
         ps3Mastered.push(l)
     }

@@ -24,19 +24,19 @@ export function setAuth(pAuth: RA.AuthObject) {
 /*************************************************** */
 /*********** MAIN CALL *******************************/
 /*************************************************** */
-export function getRAPromise(raUsername: string, raApiKey: string): Promise<Map<string, RA.GameList>> {
+export function getRAPromise(raUsername: string, raApiKey: string): Promise<Map<RA.ConsoleId, RA.GameList>> {
     //Completed games
     const completedGamesPromise: Promise<RA.UserCompletedGames> = getUserCompletedGames();
 
     //GAME LIST
-    const gameListPromise: Promise<Map<string, RA.GameList>> = getGameListPromise()
+    const gameListPromise: Promise<Map<RA.ConsoleId, RA.GameList>> = getGameListPromise()
 
     //USER AWARDS
     const userAwardsPromise: Promise<RA.UserAwards> = getUserAwards()
 
     return Promise.all([completedGamesPromise, gameListPromise, userAwardsPromise]).then(val => {
         const completedGames: RA.UserCompletedGames = val[0];
-        const gameListMap: Map<string, RA.GameList> = val[1];
+        const gameListMap: Map<RA.ConsoleId, RA.GameList> = val[1];
         const userAwards: RA.UserAwards = val[2];
         return writeRASheet(completedGames, userAwards, gameListMap);
     });
@@ -45,21 +45,22 @@ export function getRAPromise(raUsername: string, raApiKey: string): Promise<Map<
 /*************************************************** */
 /*********** WRITE SHEET ******************************/
 /*************************************************** */
-function writeRASheet(completedGames: RA.UserCompletedGames, userAwards: RA.UserAwards, gameListMap: Map<string, RA.GameList>): Promise<Map<string, RA.GameList>> {
+function writeRASheet(completedGames: RA.UserCompletedGames, userAwards: RA.UserAwards, gameListMap: Map<RA.ConsoleId, RA.GameList>): Promise<Map<RA.ConsoleId, RA.GameList>> {
     console.log("Writing RA sheet...")
     //GAMES SHEET
     let gamesArray: any[][] = [raHeader];
-    gameListMap.forEach((gameList, consoleName) => {
+    let consoleIndex = 1;
+    let gameIndex = 1;
+    gameListMap.forEach((gameList, consoleData) => {
         for (let i = 0; i < gameList.length; i++) {
-            const index: number = i + 2;
             const entity = gameList[i]
-            const gameData: any[] = [{ t: "s", v: consoleName }, { t: "s", v: entity.title }];
+            const gameData: any[] = [{ t: "s", v: consoleData.name }, { t: "s", v: entity.title }];
             let status: Common.CompletionStatusData | undefined;
             //Cannot check for game id, we then take (console, title) as key
-            if (userAwards.visibleUserAwards.some(award => award.awardType === "Mastery/Completion" && award.title === entity.title && award.consoleName === consoleName)) {
+            if (userAwards.visibleUserAwards.some(award => award.awardType === "Mastery/Completion" && award.title === entity.title && award.consoleName === consoleData.name)) {
                 status = Common.completionStatus.get("Mastered")
             }
-            else if (userAwards.visibleUserAwards.some(award => award.awardType === "Game Beaten" && award.title === entity.title && award.consoleName === consoleName)) {
+            else if (userAwards.visibleUserAwards.some(award => award.awardType === "Game Beaten" && award.title === entity.title && award.consoleName === consoleData.name)) {
                 status = Common.completionStatus.get("Beaten")
             }
             else if (completedGames.some(completedGame => completedGame.numAwarded > 0 && completedGame.gameId === entity.id)) {
@@ -69,21 +70,21 @@ function writeRASheet(completedGames: RA.UserCompletedGames, userAwards: RA.User
                 status = Common.completionStatus.get("Not played")
             }
             gameData.push({ v: status?.name, s: status?.style })
-            let numAwarded: number | undefined;
-            if (status?.name === "Mastered") {
-                numAwarded = entity.numAchievements
-            } else if (status?.name === "Not played") {
-                numAwarded = 0;
-            } else {
-                const game: RA.UserCompletedGame | undefined = completedGames.find(game => game.consoleName === consoleName && game.title === entity.title)
-                numAwarded = game?.numAwarded;
-            }
+
+            const game: RA.UserCompletedGame | undefined = completedGames.find(game => game.consoleName === consoleData.name && game.title === entity.title)
+            let numAwarded: number | undefined = game === undefined ? 0 : game.numAwarded;
+
             gameData.push({ t: "n", v: numAwarded })
             gameData.push({ t: "n", v: entity.numAchievements })
-            gameData.push({ t: "n", f: "D" + index + "/E" + index, z: "0.00%" })
+            gameData.push({ t: "n", f: "D" + (gameIndex+1) + "/E" + (gameIndex+1), z: "0.00%" })
             gameData.push({ t: "n", v: entity.id })
-            gamesArray.push(gameData)
+            gamesArray.push(gameData);
+
+            console.log("PROCESSING " + consoleData.name + " " + (i + 1) + "/" + gameList.length + " : " + entity.title + " (" + entity.id + ") -> " + status?.name);
+            gameIndex++;
         }
+        console.log("")
+        consoleIndex++;
     });
     const gamesWs: XLSX.WorkSheet = XLSX.utils.aoa_to_sheet(gamesArray);
     gamesWs['!cols'] = raColumns
@@ -114,12 +115,11 @@ export function getUserAwards(): Promise<RA.UserAwards> {
     return RA.getUserAwards(auth, { userName: auth.userName })
 }
 
-export function getGameListPromise(): Promise<Map<string, RA.GameList>> {
+export function getGameListPromise(): Promise<Map<RA.ConsoleId, RA.GameList>> {
     const consoleDataListPromise: Promise<RA.ConsoleId[]> = getConsoleIds();
+    let total:number = 0;
     return consoleDataListPromise.then(async consoleDataList => {
-        let total: number = 0;
-        const gameListMap: Map<string, RA.GameList> = new Map();
-        // consoleDataList = [{ id: 1, name: "Mega Drive" }]
+        const gameListMap: Map<RA.ConsoleId, RA.GameList> = new Map();
         for (let i = 0; i < consoleDataList.length; i++) {
             const consoleData: RA.ConsoleId = consoleDataList[i];
             console.log("GAME LIST : " + (i + 1) + "/" + consoleDataList.length);
@@ -131,9 +131,8 @@ export function getGameListPromise(): Promise<Map<string, RA.GameList>> {
             }).then(gameList => {
                 console.log("CONSOLE : " + consoleData.name + ", GAMES : " + gameList.length);
                 total += gameList.length;
-                console.log("TOTAL : " + total);
-                gameListMap.set(consoleData.name, gameList);
-                console.log("\n")
+                console.log("TOTAL : " + total + "\n\n");
+                gameListMap.set(consoleData, gameList);
             });
             await Common.timer(500);
         }
