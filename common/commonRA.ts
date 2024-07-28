@@ -56,9 +56,17 @@ function writeRASheet(completedGames: RA.UserCompletedGames, userAwards: RA.User
             const entity = gameList[i]
             const gameData: any[] = [{ t: "s", v: consoleData.name }, { t: "s", v: entity.title }];
             let status: Common.CompletionStatusData | undefined;
+
+            const game: RA.UserCompletedGame | undefined = completedGames.find(game => game.consoleName === consoleData.name && game.title === entity.title)
+            let numAwarded: number | undefined = game === undefined ? 0 : game.numAwarded;
+
             //Cannot check for game id, we then take (console, title) as key
             if (userAwards.visibleUserAwards.some(award => award.awardType === "Mastery/Completion" && award.title === entity.title && award.consoleName === consoleData.name)) {
-                status = Common.completionStatus.get("Mastered")
+                if(numAwarded == entity.numAchievements){
+                    status = Common.completionStatus.get("Mastered")
+                }else{
+                    status = Common.completionStatus.get("Beaten")
+                }
             }
             else if (userAwards.visibleUserAwards.some(award => award.awardType === "Game Beaten" && award.title === entity.title && award.consoleName === consoleData.name)) {
                 status = Common.completionStatus.get("Beaten")
@@ -69,11 +77,8 @@ function writeRASheet(completedGames: RA.UserCompletedGames, userAwards: RA.User
             else {
                 status = Common.completionStatus.get("Not played")
             }
+
             gameData.push({ v: status?.name, s: status?.style })
-
-            const game: RA.UserCompletedGame | undefined = completedGames.find(game => game.consoleName === consoleData.name && game.title === entity.title)
-            let numAwarded: number | undefined = game === undefined ? 0 : game.numAwarded;
-
             gameData.push({ t: "n", v: numAwarded })
             gameData.push({ t: "n", v: entity.numAchievements })
             gameData.push({ t: "n", f: "D" + (gameIndex+1) + "/E" + (gameIndex+1), z: "0.00%" })
