@@ -2,6 +2,7 @@ import * as Common from "./common"
 import * as XLSX from "xlsx-js-style";
 import * as fs from "fs";
 import * as rd from "readline";
+import { json } from "stream/consumers";
 
 export const steamColumns: XLSX.ColInfo[] = [{ wch: 50 }, { wch: 20 }, { wch: 20 }, { wch: 20 }, { wch: 15 }, { wch: 15 }]
 
@@ -43,6 +44,9 @@ export function parseJsonToOwnedGamesResponse(json: any): OwnedGamesResponse {
 
 //Achievement data
 export interface AchievementData {
+    apiName:string,
+    title:string,
+    description:string,
     achieved: boolean
 }
 
@@ -53,12 +57,24 @@ export function parseGameAchievementData(json: any, game: OwnedGame): OwnedGame 
         let achievementData: AchievementData[] = []
         for (let val of achievements) {
             achievementData.push({
+                apiName:"",
+                title:"",
+                description:"",
                 achieved: val.achieved === 1
             })
         }
         game.achievements = achievementData;
     }
     return game;
+}
+
+function parseDetailsGameAchievementData(json:any):AchievementData{
+    return {
+        apiName:json.name,
+        title:json.displayName,
+        description:json.description,
+        achieved:false
+    };
 }
 
 async function getAchievements(steamId: string, steamApiKey: string, appId: number) {
@@ -168,4 +184,45 @@ async function writeSteamSheet(ownedGames: OwnedGamesResponse): Promise<OwnedGam
     gamesWs['!cols'] = steamColumns
     XLSX.utils.book_append_sheet(Common.wb, gamesWs, "SteamGames")
     return new Promise((resolve) => resolve(ownedGames));
+}
+
+export async function getAchievementsForGame(steamId:string, steamApiKey:string, gameId: number, getRandom: boolean){
+    const gameData = await fetch('https://api.steampowered.com/ISteamUserStats/GetSchemaForGame/v0002/?appid=' + gameId + '&key=' + steamApiKey + '&steamid=' + steamId + '&format=json&include_appinfo=1&include_played_free_games=1&skip_unvetted_apps=0');
+    const gameDataJsonRes = (await gameData.json());
+    const userData = await fetch('https://api.steampowered.com/ISteamUserStats/GetPlayerAchievements/v0001/?appid=' + gameId + '&key=' + steamApiKey + '&steamid=' + steamId + '&format=json&include_appinfo=1&include_played_free_games=1&skip_unvetted_apps=0');
+    const userDataJsonRes = (await userData.json());
+
+    let earnedAchs:AchievementData[]  = [];
+    let notEarnedAchs: AchievementData[] = [];
+
+    let gameDataAchievements:any[] = gameDataJsonRes.game.availableGameStats.achievements;
+    let userDataAchievements:any[] = userDataJsonRes.playerstats.achievements;
+    for(let i = 0; i < gameDataAchievements.length; i++){
+        let ach: AchievementData = parseDetailsGameAchievementData(gameDataAchievements[i]);
+        if(userDataAchievements.find(userAch => userAch.apiname == ach.apiName && userAch.achieved)){
+            ach.achieved = true;
+            earnedAchs.push(ach)
+        }else{
+            ach.achieved = false;
+            notEarnedAchs.push(ach)
+        }
+    }
+
+    console.log("Earned")
+    earnedAchs.forEach(earnedAch =>{
+        console.log("\t" + earnedAch.title + " : " + earnedAch.description)
+    })
+    console.log("")
+
+    console.log("Not earned")
+    notEarnedAchs.forEach(notEarnedAch =>{
+        console.log("\t" + notEarnedAch.title + " : " + notEarnedAch.description)
+    })
+    console.log("")
+
+    if(getRandom){
+        let id = Math.floor(Math.random() * (notEarnedAchs.length));
+        console.log("Random cheevo")
+        console.log("\t" + notEarnedAchs[id].title + " : " + notEarnedAchs[id].description);
+    }
 }

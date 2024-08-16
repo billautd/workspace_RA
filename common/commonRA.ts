@@ -145,6 +145,36 @@ export function getGameListPromise(): Promise<Map<RA.ConsoleId, RA.GameList>> {
     });
 }
 
-export async function getRecentGamesPromise(): Promise<RA.UserRecentlyPlayedGames> {
-    return await RA.getUserRecentlyPlayedGames(auth, { userName: auth.userName, count: 50 });
+export function getAchievementsForGame(gameId: number, getRandom: boolean):void{
+    RA.getGameInfoAndUserProgress(auth, {
+        gameId:gameId,
+        userName:auth.userName
+    }).then(progress => {
+        let earnedAchs: RA.GameExtendedAchievementEntityWithUserProgress[] = [];
+        let notEarnedAchs: RA.GameExtendedAchievementEntityWithUserProgress[] = [];
+        Object.values(progress.achievements).forEach(ach => {
+            if(ach.dateEarned){
+                earnedAchs.push(ach);
+            }else{
+                notEarnedAchs.push(ach);
+            }
+        })
+        console.log("Earned")
+        earnedAchs.forEach(earnedAch =>{
+            console.log("\t" + earnedAch.title + " : " + earnedAch.description)
+        })
+        console.log("")
+
+        console.log("Not earned")
+        notEarnedAchs.forEach(notEarnedAch =>{
+            console.log("\t" + notEarnedAch.title + " : " + notEarnedAch.description)
+        })
+        console.log("")
+
+        if(getRandom){
+            let id = Math.floor(Math.random() * (notEarnedAchs.length));
+            console.log("Random cheevo")
+            console.log("\t" + notEarnedAchs[id].title + " : " + notEarnedAchs[id].description);
+        }
+    })
 }
