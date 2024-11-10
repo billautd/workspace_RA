@@ -85,7 +85,7 @@ function writeRASheet(completedGames: RA.UserCompletedGames, userAwards: RA.User
             gameData.push({ t: "n", v: entity.id })
             gamesArray.push(gameData);
 
-            console.log("PROCESSING " + consoleData.name + " " + (i + 1) + "/" + gameList.length + " : " + entity.title + " (" + entity.id + ") -> " + status?.name);
+            console.log("PROCESSING " + consoleData.name + " " + (i + 1) + "/" + gameList.length + " : " + entity.title + " (" + entity.id + ") -> " + status?.name + " (" + numAwarded + "/" + entity.numAchievements +")");
             gameIndex++;
         }
         console.log("")

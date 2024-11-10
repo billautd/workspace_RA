@@ -13,6 +13,9 @@ export const steamHeader: any[] = [{ t: "s", v: "Name", s: Common.headerStyle2 }
 { t: "s", v: "Percentage", s: Common.headerStyle2 },
 { t: "s", v: "APPID", s: Common.headerStyle2 }]
 
+let retryIndex:number = 1;
+const retryMax:number = 3;
+
 //Data used to get achievement data from steam game
 export interface OwnedGame {
     name: string,
@@ -79,16 +82,42 @@ function parseDetailsGameAchievementData(json:any):AchievementData{
 
 async function getAchievements(steamId: string, steamApiKey: string, appId: number) {
     const result = await fetch('http://api.steampowered.com/ISteamUserStats/GetPlayerAchievements/v0001/?appid=' + appId + '&key=' + steamApiKey + '&steamid=' + steamId);
-    const jsonRes = await result.json();
+    let jsonRes:any = "";
+    let textRes:any = "";
+    try{
+        textRes = await result.text();
+        jsonRes = JSON.parse(textRes);
+        console.log("Text response to Steam achievements for game " + appId + " : " + textRes);
+        console.log("JSON response to Steam achievements for game " + appId + " : " + JSON.stringify(jsonRes, null, 4));
+        retryIndex = 1;
+    }catch(err){
+        console.log(err);
+        console.log("Error parsing JSON achievements result for game " + appId + " : " + textRes);
+        if(retryIndex > retryMax){
+            console.log("Out of retries");
+            throw err;
+        }else{
+            console.log("Retrying " + retryIndex + "/" + retryMax + "...");
+            retryIndex++;
+            return getAchievements(steamId, steamApiKey, appId);
+        }
+    }
     return jsonRes;
 }
 
 export async function getSteamPromise(steamId: string, steamApiKey: string): Promise<OwnedGamesResponse> {
     const result = await fetch('https://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key=' + steamApiKey + '&steamid=' + steamId + '&format=json&include_appinfo=1&include_played_free_games=1&skip_unvetted_apps=0');
-    const jsonRes = (await result.json()).response;
+    let jsonRes:any = ""; 
+    try{
+        jsonRes = (await result.json()).response;
+        console.log("JSON response to Steam promise : " + JSON.stringify(jsonRes, null, 4));
+    }catch(err){
+        console.log(err);
+        console.log("Error parsing JSON Steam promise result : " + result);
+    }
+    
 
     const ownedGamesResponse: OwnedGamesResponse = [];
-    const achievementsData: any = {}
     // for (let i = 0; i < 50; i++) {
     for (let i = 0; i < jsonRes.games.length; i++) {
         const ownedGame: OwnedGame = parseJsonToOwnedGame(jsonRes.games[i])
