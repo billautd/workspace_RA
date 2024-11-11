@@ -2,7 +2,7 @@ import * as Common from "./common"
 import * as XLSX from "xlsx-js-style";
 import * as fs from "fs";
 import * as rd from "readline";
-import { json } from "stream/consumers";
+import { LocalGameData } from "../compareService";
 
 export const steamColumns: XLSX.ColInfo[] = [{ wch: 50 }, { wch: 20 }, { wch: 20 }, { wch: 20 }, { wch: 15 }, { wch: 15 }]
 
@@ -16,18 +16,22 @@ export const steamHeader: any[] = [{ t: "s", v: "Name", s: Common.headerStyle2 }
 let retryIndex:number = 1;
 const retryMax:number = 3;
 
+let gameList:OwnedGamesResponse = [];
+
 //Data used to get achievement data from steam game
 export interface OwnedGame {
     name: string,
     appId: number,
-    achievements: AchievementData[]
+    achievements: AchievementData[],
+    status:Common.CompletionStatusData
 }
 
 export function parseJsonToOwnedGame(json: any): OwnedGame {
     const ownedGame: OwnedGame = {
         name: json.name,
         appId: json.appid,
-        achievements: []
+        achievements: [],
+        status:Common.completionStatus.get("Not played")!
     }
     return ownedGame;
 }
@@ -117,7 +121,6 @@ export async function getSteamPromise(steamId: string, steamApiKey: string): Pro
     }
     
 
-    const ownedGamesResponse: OwnedGamesResponse = [];
     // for (let i = 0; i < 50; i++) {
     for (let i = 0; i < jsonRes.games.length; i++) {
         const ownedGame: OwnedGame = parseJsonToOwnedGame(jsonRes.games[i])
@@ -130,10 +133,10 @@ export async function getSteamPromise(steamId: string, steamApiKey: string): Pro
             statusLog = ("Achievements : " + ownedGame.achievements.length);
         }
         console.log("PROCESSING " + (i + 1) + "/" + jsonRes.games.length + " : " + ownedGame.name + " (" + ownedGame.appId + ") -> " + statusLog);
-        ownedGamesResponse.push(ownedGame)
+        gameList.push(ownedGame)
     }
 
-    return writeSteamSheet(ownedGamesResponse)
+    return writeSteamSheet(gameList)
 }
 
 async function getLocalSteamBeaten(): Promise<string[]> {
@@ -184,6 +187,7 @@ async function writeSteamSheet(ownedGames: OwnedGamesResponse): Promise<OwnedGam
         else {
             status = Common.completionStatus.get("Not played")
         }
+        ownedGame.status = status!;
         console.log(ownedGame.appId + " -> " + (isNoAchievements ? "No achievements : " : "") + status?.name)
         gameDataArray.push({ "v": status?.name, "s": status?.style })
         let numAwarded: number;
@@ -254,4 +258,28 @@ export async function getAchievementsForGame(steamId:string, steamApiKey:string,
         console.log("Random cheevo")
         console.log("\t" + notEarnedAchs[id].title + " : " + notEarnedAchs[id].description);
     }
+}
+
+export function compareSteamData(localSteamDataList:LocalGameData[]):void{
+    //Check if local is correct
+    localSteamDataList.forEach(data => {
+        const gameFound = gameList.find(g => g.name === data.name);
+        if(!gameFound){
+            console.log(data.name + " for Steam => In Playnite but not in Steam");
+        }else{
+            if(!data.completionStatus.toLowerCase().includes(gameFound.status.name.toLocaleLowerCase())){
+                console.log(data.name + " for Steam => " + data.completionStatus + " in Playnite but " + gameFound.status.name + " in Steam");
+            }
+        }
+        console.log("\n")
+    });
+
+    //Check if Steam is correct
+    gameList.forEach(data => {
+        const gameFound = localSteamDataList.find(g => data.name === g.name);
+        if(!gameFound){
+            console.log(data.name + " for Steam => In Steam but not in Playnite");
+        }
+        console.log("\n")
+    });
 }

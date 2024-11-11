@@ -4,9 +4,6 @@ import * as CommonSteam from "./common/commonSteam"
 import * as CommonRA from "./common/commonRA"
 import * as RA from "@retroachievements/api"
 
-const numberOfRandomGames: number = 5
-const numberOfPlayingGames: number = 3
-
 export async function createConsoleDataSheet(): Promise<XLSX.WorkSheet> {
     //CONSOLE DATA SHEET
     console.log("Creating console data sheet")
@@ -17,10 +14,10 @@ export async function createConsoleDataSheet(): Promise<XLSX.WorkSheet> {
     { t: "n", f: "SUM(C2:C1000)" },
     { t: "s", v: "Games total", s: Common.headerStyle2 },
     { t: "n", f: "SUM(B2:B1000)" }]];
-    const consoleIds: RA.ConsoleId[] = await CommonRA.getConsoleIds()
+    
     //List of RA consoles + number of games and number of achievements
-    for (let i = 0; i < consoleIds.length; i++) {
-        const consoleId: RA.ConsoleId = consoleIds[i];
+    for (let i = 0; i < CommonRA.consoleList.length; i++) {
+        const consoleId: RA.ConsoleId = CommonRA.consoleList[i];
         consoleDataArray.push([{ t: "s", v: consoleId.name }, { t: "n", f: "COUNTIF(RAGames!A2:A20000, A" + (i + 2) }, { t: "n", f: "SUMIF(RAGames!A2:A20000, A" + (i + 2) + ", RAGames!E2:E20000)" }])
     }
     //Steam + number of games and number of achievements

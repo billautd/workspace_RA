@@ -6,11 +6,13 @@ import * as CommonPS3 from "./common/commonPS3"
 import * as CommonPSVita from "./common/commonPSVita"
 import * as RA from "@retroachievements/api"
 import * as SheetService from "./mainSheetService"
+import * as CompareService from "./compareService"
 
 let raUsername: string = ""
 let raApiKey: string = ""
 let steamId: string = ""
 let steamKey: string = ""
+let compareFile: string = ""
 
 //Parse parameters
 process.argv.forEach((value, index) => {
@@ -26,6 +28,9 @@ process.argv.forEach((value, index) => {
     if (value.startsWith("steamKey")) {
         steamKey = value.split("=")[1]
     }
+    if(value.startsWith("compareFile")){
+        compareFile = value.split("=")[1]
+    }
 });
 if (raUsername === "") {
     throw new Error("raUsername parameter is not defined")
@@ -38,6 +43,9 @@ if (steamId === "") {
 }
 if (steamKey === "") {
     throw new Error("steamKey parameter is not defined")
+}
+if(compareFile === ""){
+    console.log("No compare file given")
 }
 //Build authorization
 CommonRA.setAuth(RA.buildAuthorization({ userName: raUsername, webApiKey: raApiKey }));
@@ -66,6 +74,7 @@ promisesArray.push(CommonPS3.getPS3Promise());
 promisesArray.push(CommonPSVita.getPSVitaPromise());
 
 
+
 //Promises array contains all promises that have to be parsed based on fullscan value
 Promise.all(promisesArray).then(async val => {
     console.log("Writing main file...")
@@ -77,4 +86,7 @@ Promise.all(promisesArray).then(async val => {
     XLSX.utils.book_append_sheet(Common.wb, completionDataSheet, "CompletionData")
 
     XLSX.writeFile(Common.wb, "Files/Achievements.xlsx");
+    if(compareFile !== ""){
+        CompareService.compareData(compareFile);
+    }
 })
