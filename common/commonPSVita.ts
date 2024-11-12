@@ -81,7 +81,7 @@ async function writePSVitaSheet(): Promise<GameData[]> {
 export function comparePSVitaData(localPSVitaDataList:LocalGameData[]):void{
     //Check if local is correct
     localPSVitaDataList.forEach(data => {
-        const gameFound = gameList.find(g => g.name === data.name);
+        const gameFound = gameList.find(g => g.name == data.name);
         if(!gameFound){
             console.log(data.name + " for PSVita => In Playnite but not in PSVita");
         }else{
@@ -90,12 +90,14 @@ export function comparePSVitaData(localPSVitaDataList:LocalGameData[]):void{
             }
         }
     });
+    console.log("\n");
 
     //Check if PSVita is correct
     gameList.forEach(data => {
-        const gameFound = localPSVitaDataList.find(g => data.name === g.name);
+        const gameFound = localPSVitaDataList.find(g => data.name == g.name);
         if(!gameFound){
             console.log(data.name + " for PSVita => In PSVita but not in Playnite");
         }
     });
+    console.log("\n");
 }

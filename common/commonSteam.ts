@@ -263,7 +263,7 @@ export async function getAchievementsForGame(steamId:string, steamApiKey:string,
 export function compareSteamData(localSteamDataList:LocalGameData[]):void{
     //Check if local is correct
     localSteamDataList.forEach(data => {
-        const gameFound = gameList.find(g => g.name === data.name);
+        const gameFound = gameList.find(g => g.name == data.name);
         if(!gameFound){
             console.log(data.name + " for Steam => In Playnite but not in Steam");
         }else{
@@ -271,15 +271,15 @@ export function compareSteamData(localSteamDataList:LocalGameData[]):void{
                 console.log(data.name + " for Steam => " + data.completionStatus + " in Playnite but " + gameFound.status.name + " in Steam");
             }
         }
-        console.log("\n")
     });
+    console.log("\n")
 
     //Check if Steam is correct
     gameList.forEach(data => {
-        const gameFound = localSteamDataList.find(g => data.name === g.name);
+        const gameFound = localSteamDataList.find(g => data.name == g.name);
         if(!gameFound){
             console.log(data.name + " for Steam => In Steam but not in Playnite");
         }
-        console.log("\n")
     });
+    console.log("\n")
 }

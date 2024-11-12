@@ -83,7 +83,7 @@ async function writePS3Sheet(): Promise<GameData[]> {
 export function comparePS3Data(localPS3DataList:LocalGameData[]):void{
     //Check if local is correct
     localPS3DataList.forEach(data => {
-        const gameFound = gameList.find(g => g.name === data.name);
+        const gameFound = gameList.find(g => g.name == data.name);
         if(!gameFound){
             console.log(data.name + " for PS3 => In Playnite but not in PS3");
         }else{
@@ -91,15 +91,15 @@ export function comparePS3Data(localPS3DataList:LocalGameData[]):void{
                 console.log(data.name + " for PS3 => " + data.completionStatus + " in Playnite but " + gameFound.status.name + " in PS3");
             }
         }
-        console.log("\n")
     });
+    console.log("\n")
 
     //Check if PS3 is correct
     gameList.forEach(data => {
-        const gameFound = localPS3DataList.find(g => data.name === g.name);
+        const gameFound = localPS3DataList.find(g => data.name == g.name);
         if(!gameFound){
             console.log(data.name + " for PS3 => In PS3 but not in Playnite");
         }
-        console.log("\n")
     });
+    console.log("\n")
 }

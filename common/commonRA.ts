@@ -197,7 +197,7 @@ export function compareRAData(localRaDataMap:Map<string, LocalGameData[]>):void{
     localRaDataMap.forEach((list, key, map) => {
         let raGameList:RA.GameList | undefined = undefined;
         gameListMap.forEach((gv, gk, gm) => {
-            if (gk.name === key){
+            if (gk.name == key){
               raGameList = gv;
             }
           })
@@ -206,7 +206,7 @@ export function compareRAData(localRaDataMap:Map<string, LocalGameData[]>):void{
               return;
           }
         list.forEach(game => {
-            const gameFound = raGameList?.find(g => g.title === game.name);
+            const gameFound = raGameList?.find(g => g.title == game.name);
             if(!gameFound){
                 console.log(game.name + " for " + key + " => In Playnite but not in RA");
             }else{
@@ -220,14 +220,14 @@ export function compareRAData(localRaDataMap:Map<string, LocalGameData[]>):void{
                 }
             }
         })
-        console.log("\n")
     });
+    console.log("\n");
 
     //Check if RA is correct
     gameListMap.forEach((list, key, map) => {
         let localGameList:LocalGameData[] | undefined = undefined;
         localRaDataMap.forEach((lv, lk, lm) => {
-            if (lk === key.name){
+            if (lk == key.name){
               localGameList = lv;
             }
           })
@@ -236,11 +236,12 @@ export function compareRAData(localRaDataMap:Map<string, LocalGameData[]>):void{
               return;
           }
         list.forEach(game => {
-            const gameFound = localGameList?.find(g => game.title === g.name);
+            const gameFound = localGameList?.find(g => game.title == g.name);
             if(!gameFound){
                 console.log(game.title + " for " + key.name + " => In RA but not in Playnite");
             }
         })
-        console.log("\n")
     });
+
+    console.log("\n");
 }

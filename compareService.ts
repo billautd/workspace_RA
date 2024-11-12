@@ -26,7 +26,14 @@ export const ps3DataList: LocalGameData[] = [];
 export const psVitaDataList: LocalGameData[] = [];
 
 export function compareData(filepath:string){
-    const workbook = XLSX.readFile(filepath);
+    let workbook;
+    try{
+         workbook = XLSX.readFile(filepath);
+    }
+    catch(err){
+        console.log(err);
+        return;
+    }
     const sheet:XLSX.WorkSheet = workbook.Sheets["Sheet1"];
     let i:number = 1;
     while(sheet[nameColumn+i]){
