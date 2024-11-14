@@ -2,7 +2,7 @@ import * as Common from "./common"
 import * as XLSX from "xlsx-js-style";
 import * as rd from "readline";
 import * as fs from "fs";
-import { LocalGameData } from "../compareService";
+import { compareCompletionStatus, LocalGameData } from "../compareService";
 
 export const psVitaColumns: XLSX.ColInfo[] = [{ wch: 50 }, { wch: 20 }]
 
@@ -54,7 +54,7 @@ async function writePSVitaSheet(): Promise<GameData[]> {
     let localPSVitaMasteredGames: string[] = await getPSVitaMastered()
     let gamesArray = [psVitaHeader]
     for (let ownedGame of gameList) {
-        const gameDataArray: any[] = [{ t: "s", v: ownedGame }]
+        const gameDataArray: any[] = [{ t: "s", v: ownedGame.name }]
         let status: Common.CompletionStatusData | undefined;
         let isInLocalBeaten = localPSVitaBeatenGames.find(n => n === ownedGame.name)
         let isInLocalMastered = localPSVitaMasteredGames.find(n => n === ownedGame.name)
@@ -85,7 +85,7 @@ export function comparePSVitaData(localPSVitaDataList:LocalGameData[]):void{
         if(!gameFound){
             console.log(data.name + " for PSVita => In Playnite but not in PSVita");
         }else{
-            if(!data.completionStatus.toLowerCase().includes(gameFound.status.name.toLocaleLowerCase())){
+            if(!compareCompletionStatus(data.completionStatus, gameFound.status.name)){
                 console.log(data.name + " for PSVita => " + data.completionStatus + " in Playnite but " + gameFound.status.name + " in PSVita");
             }
         }

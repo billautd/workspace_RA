@@ -59,7 +59,29 @@ export function compareData(filepath:string){
         i++;
     }
     CommonRA.compareRAData(raDataMap);
+    //Comparing steam data does not seem worth since it is imported directly through Playnite plugin
     CommonSteam.compareSteamData(steamDataList);
     CommonPS3.comparePS3Data(ps3DataList);
     CommonPSVita.comparePSVitaData(psVitaDataList);
+}
+
+export function compareCompletionStatus(playniteStatus:string, externalStatus:string):boolean{
+    switch(playniteStatus){
+        case "1 - Playing":
+            return true;
+        case "2 - Not Played":
+            return externalStatus == "Not played";
+        case "3 - Tried":
+            return externalStatus == "Tried";
+        case "4 - Beaten":
+            return externalStatus == "Beaten";
+        case "5 - Mastered":
+            return externalStatus == "Mastered";
+        case "6 - No Achievements & Not Interested":
+            return externalStatus == "No achievements";
+        case "7 - Cannot Play":
+            return false;
+        default:
+            return false;
+    }
 }

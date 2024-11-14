@@ -2,7 +2,7 @@ import * as Common from "./common"
 import * as XLSX from "xlsx-js-style";
 import * as fs from "fs";
 import * as rd from "readline";
-import { LocalGameData } from "../compareService";
+import { LocalGameData, compareCompletionStatus } from "../compareService";
 
 export const steamColumns: XLSX.ColInfo[] = [{ wch: 50 }, { wch: 20 }, { wch: 20 }, { wch: 20 }, { wch: 15 }, { wch: 15 }]
 
@@ -267,7 +267,7 @@ export function compareSteamData(localSteamDataList:LocalGameData[]):void{
         if(!gameFound){
             console.log(data.name + " for Steam => In Playnite but not in Steam");
         }else{
-            if(!data.completionStatus.toLowerCase().includes(gameFound.status.name.toLocaleLowerCase())){
+            if(!compareCompletionStatus(data.completionStatus, gameFound.status.name)){
                 console.log(data.name + " for Steam => " + data.completionStatus + " in Playnite but " + gameFound.status.name + " in Steam");
             }
         }

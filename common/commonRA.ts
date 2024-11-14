@@ -1,7 +1,7 @@
 import * as RA from "@retroachievements/api";
 import * as Common from "./common"
 import * as XLSX from "xlsx-js-style";
-import {LocalGameData, raDataMap} from "../compareService";
+import {compareCompletionStatus, LocalGameData, raDataMap} from "../compareService";
 
 export const consolesToIgnore: string[] = ["Events", "Hubs"];
 
@@ -215,7 +215,7 @@ export function compareRAData(localRaDataMap:Map<string, LocalGameData[]>):void{
                     console.log(game.name + " for " + key + " => No completion status in RA");
                     return;
                 }
-                if(!game.completionStatus.toLowerCase().includes(gameFoundStatus.toLocaleLowerCase())){
+                if(!compareCompletionStatus(game.completionStatus, gameFoundStatus)){
                     console.log(game.name + " for " + key + " => " + game.completionStatus + " in Playnite but " + gameFoundStatus + " in RA");
                 }
             }

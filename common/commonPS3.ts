@@ -2,7 +2,7 @@ import * as Common from "./common"
 import * as XLSX from "xlsx-js-style";
 import * as rd from "readline";
 import * as fs from "fs";
-import { LocalGameData } from "../compareService";
+import { compareCompletionStatus, LocalGameData } from "../compareService";
 import { Game } from "@retroachievements/api";
 
 export const ps3Columns: XLSX.ColInfo[] = [{ wch: 50 }, { wch: 20 }]
@@ -55,7 +55,7 @@ async function writePS3Sheet(): Promise<GameData[]> {
     let localPS3MasteredGames: string[] = await getPS3Mastered()
     let gamesArray = [ps3Header]
     for (let ownedGame of gameList) {
-        const gameDataArray: any[] = [{ t: "s", v: ownedGame }]
+        const gameDataArray: any[] = [{ t: "s", v: ownedGame.name }]
         let status: Common.CompletionStatusData | undefined;
         let isInLocalBeaten = localPS3BeatenGames.find(n => n === ownedGame.name)
         let isInLocalMastered = localPS3MasteredGames.find(n => n === ownedGame.name)
@@ -87,7 +87,7 @@ export function comparePS3Data(localPS3DataList:LocalGameData[]):void{
         if(!gameFound){
             console.log(data.name + " for PS3 => In Playnite but not in PS3");
         }else{
-            if(!data.completionStatus.toLowerCase().includes(gameFound.status.name.toLocaleLowerCase())){
+            if(!compareCompletionStatus(data.completionStatus, gameFound.status.name)){
                 console.log(data.name + " for PS3 => " + data.completionStatus + " in Playnite but " + gameFound.status.name + " in PS3");
             }
         }
