@@ -25,7 +25,7 @@ async function getPS3Games(): Promise<GameData[]> {
     let ps3Games: GameData[] = [];
     const reader = rd.createInterface(fs.createReadStream("Files/PS3Games.txt"));
     for await (const l of reader) {
-        ps3Games.push({name:l, status:Common.completionStatus.get("Not played")!})
+        ps3Games.push({name:l, status:Common.completionStatus.get(Common.CompletionStatusType.NOT_PLAYED)!})
     }
     return ps3Games
 }
@@ -49,7 +49,7 @@ async function getPS3Mastered(): Promise<string[]> {
 }
 
 async function writePS3Sheet(): Promise<GameData[]> {
-    console.log("Writing PS3 sheet...")
+    Common.logger.info("Writing PS3 sheet...")
     gameList = await getPS3Games()
     let localPS3BeatenGames: string[] = await getPS3Beaten()
     let localPS3MasteredGames: string[] = await getPS3Mastered()
@@ -61,16 +61,16 @@ async function writePS3Sheet(): Promise<GameData[]> {
         let isInLocalMastered = localPS3MasteredGames.find(n => n === ownedGame.name)
 
         if (isInLocalMastered) {
-            status = Common.completionStatus.get("Mastered")
+            status = Common.completionStatus.get(Common.CompletionStatusType.MASTERED)
         }
         else if (isInLocalBeaten) {
-            status = Common.completionStatus.get("Beaten")
+            status = Common.completionStatus.get(Common.CompletionStatusType.BEATEN)
         }
         else {
-            status = Common.completionStatus.get("Not played")
+            status = Common.completionStatus.get(Common.CompletionStatusType.NOT_PLAYED)
         }
         ownedGame.status = status!;
-        console.log(ownedGame.name + " -> " + status?.name)
+        Common.logger.debug(ownedGame.name + " -> " + status?.name)
         gameDataArray.push({ "v": status?.name, "s": status?.style })
         gamesArray.push(gameDataArray)
     }
@@ -81,25 +81,27 @@ async function writePS3Sheet(): Promise<GameData[]> {
 }
 
 export function comparePS3Data(localPS3DataList:LocalGameData[]):void{
+    Common.logger.info("Comparing PS3 data");
+
     //Check if local is correct
     localPS3DataList.forEach(data => {
         const gameFound = gameList.find(g => g.name == data.name);
         if(!gameFound){
-            console.log(data.name + " for PS3 => In Playnite but not in PS3");
+            Common.logger.error(data.name + " for PS3 => In Playnite but not in PS3");
         }else{
             if(!compareCompletionStatus(data.completionStatus, gameFound.status.name)){
-                console.log(data.name + " for PS3 => " + data.completionStatus + " in Playnite but " + gameFound.status.name + " in PS3");
+                Common.logger.error(data.name + " for PS3 => " + data.completionStatus + " in Playnite but " + gameFound.status.name + " in PS3");
+            }
+            else{
+                Common.logger.debug(data.name + " for PS3 => OK");
             }
         }
     });
-    console.log("\n")
-
     //Check if PS3 is correct
     gameList.forEach(data => {
         const gameFound = localPS3DataList.find(g => data.name == g.name);
         if(!gameFound){
-            console.log(data.name + " for PS3 => In PS3 but not in Playnite");
+            Common.logger.error(data.name + " for PS3 => In PS3 but not in Playnite");
         }
     });
-    console.log("\n")
 }

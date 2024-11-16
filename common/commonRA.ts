@@ -55,7 +55,7 @@ export function getRAPromise(raUsername: string, raApiKey: string): Promise<Map<
 /*********** WRITE SHEET ******************************/
 /*************************************************** */
 function writeRASheet(completedGames: RA.UserCompletedGames, userAwards: RA.UserAwards, gameListMap: Map<RA.ConsoleId, RA.GameList>): Promise<Map<RA.ConsoleId, RA.GameList>> {
-    console.log("Writing RA sheet...")
+    Common.logger.info("Writing RA sheet...")
     //GAMES SHEET
     let gamesArray: any[][] = [raHeader];
     let consoleIndex = 1;
@@ -72,19 +72,19 @@ function writeRASheet(completedGames: RA.UserCompletedGames, userAwards: RA.User
             //Cannot check for game id, we then take (console, title) as key
             if (userAwards.visibleUserAwards.some(award => award.awardType === "Mastery/Completion" && award.title === entity.title && award.consoleName === consoleData.name)) {
                 if(numAwarded == entity.numAchievements){
-                    status = Common.completionStatus.get("Mastered")
+                    status = Common.completionStatus.get(Common.CompletionStatusType.MASTERED)
                 }else{
-                    status = Common.completionStatus.get("Beaten")
+                    status = Common.completionStatus.get(Common.CompletionStatusType.BEATEN)
                 }
             }
             else if (userAwards.visibleUserAwards.some(award => award.awardType === "Game Beaten" && award.title === entity.title && award.consoleName === consoleData.name)) {
-                status = Common.completionStatus.get("Beaten")
+                status = Common.completionStatus.get(Common.CompletionStatusType.BEATEN)
             }
             else if (completedGames.some(completedGame => completedGame.numAwarded > 0 && completedGame.gameId === entity.id)) {
-                status = Common.completionStatus.get("Tried")
+                status = Common.completionStatus.get(Common.CompletionStatusType.TRIED)
             }
             else {
-                status = Common.completionStatus.get("Not played")
+                status = Common.completionStatus.get(Common.CompletionStatusType.NOT_PLAYED)
             }
             if(status){
                 gameStatusMap.set(entity.id, status);
@@ -98,10 +98,9 @@ function writeRASheet(completedGames: RA.UserCompletedGames, userAwards: RA.User
             gameData.push({ t: "n", v: entity.id })
             gamesArray.push(gameData);
 
-            console.log("PROCESSING " + consoleData.name + " " + (i + 1) + "/" + gameList.length + " : " + entity.title + " (" + entity.id + ") -> " + status?.name + " (" + numAwarded + "/" + entity.numAchievements +")");
+            Common.logger.debug("PROCESSING " + consoleData.name + " " + (i + 1) + "/" + gameList.length + " : " + entity.title + " (" + entity.id + ") -> " + status?.name + " (" + numAwarded + "/" + entity.numAchievements +")");
             gameIndex++;
         }
-        console.log("")
         consoleIndex++;
     });
     const gamesWs: XLSX.WorkSheet = XLSX.utils.aoa_to_sheet(gamesArray);
@@ -140,16 +139,16 @@ export function getGameListPromise(): Promise<Map<RA.ConsoleId, RA.GameList>> {
         const gameListMap: Map<RA.ConsoleId, RA.GameList> = new Map();
         for (let i = 0; i < consoleDataList.length; i++) {
             const consoleData: RA.ConsoleId = consoleDataList[i];
-            console.log("GAME LIST : " + (i + 1) + "/" + consoleDataList.length);
+            Common.logger.info("GAME LIST : " + (i + 1) + "/" + consoleDataList.length);
             //Create promise for given console data, add to gameListPromises list
             RA.getGameList(auth, {
                 consoleId: consoleData.id,
                 shouldOnlyRetrieveGamesWithAchievements: true,
                 shouldRetrieveGameHashes: false
             }).then(gameList => {
-                console.log("CONSOLE : " + consoleData.name + ", GAMES : " + gameList.length);
+                Common.logger.info("CONSOLE : " + consoleData.name + ", GAMES : " + gameList.length);
                 total += gameList.length;
-                console.log("TOTAL : " + total + "\n\n");
+                Common.logger.info("TOTAL : " + total);
                 gameListMap.set(consoleData, gameList);
             });
             await Common.timer(500);
@@ -172,27 +171,27 @@ export function getAchievementsForGame(gameId: number, getRandom: boolean):void{
                 notEarnedAchs.push(ach);
             }
         })
-        console.log("Earned")
+        Common.logger.info("Earned")
         earnedAchs.forEach(earnedAch =>{
-            console.log("\t" + earnedAch.title + " : " + earnedAch.description)
+            Common.logger.info("\t" + earnedAch.title + " : " + earnedAch.description)
         })
-        console.log("")
 
-        console.log("Not earned")
+        Common.logger.info("Not earned")
         notEarnedAchs.forEach(notEarnedAch =>{
-            console.log("\t" + notEarnedAch.title + " : " + notEarnedAch.description)
+            Common.logger.info("\t" + notEarnedAch.title + " : " + notEarnedAch.description)
         })
-        console.log("")
 
         if(getRandom){
             let id = Math.floor(Math.random() * (notEarnedAchs.length));
-            console.log("Random cheevo")
-            console.log("\t" + notEarnedAchs[id].title + " : " + notEarnedAchs[id].description);
+            Common.logger.info("Random cheevo")
+            Common.logger.info("\t" + notEarnedAchs[id].title + " : " + notEarnedAchs[id].description);
         }
     })
 }
 
 export function compareRAData(localRaDataMap:Map<string, LocalGameData[]>):void{
+    Common.logger.info("Comparing RA data");
+
     //Check if local is correct
     localRaDataMap.forEach((list, key, map) => {
         let raGameList:RA.GameList | undefined = undefined;
@@ -202,27 +201,28 @@ export function compareRAData(localRaDataMap:Map<string, LocalGameData[]>):void{
             }
           })
           if(!raGameList){
-              console.log("Console " + key + " does not have any RA data");
+              Common.logger.error("Console " + key + " does not have any RA data");
               return;
           }
         list.forEach(game => {
             const gameFound = raGameList?.find(g => g.title == game.name);
             if(!gameFound){
-                console.log(game.name + " for " + key + " => In Playnite but not in RA");
+                Common.logger.error(game.name + " for " + key + " => In Playnite but not in RA");
             }else{
                 const gameFoundStatus: string | undefined = gameStatusMap.get(gameFound.id)?.name;
                 if(!gameFoundStatus){
-                    console.log(game.name + " for " + key + " => No completion status in RA");
+                    Common.logger.error(game.name + " for " + key + " => No completion status in RA");
                     return;
                 }
                 if(!compareCompletionStatus(game.completionStatus, gameFoundStatus)){
-                    console.log(game.name + " for " + key + " => " + game.completionStatus + " in Playnite but " + gameFoundStatus + " in RA");
+                    Common.logger.error(game.name + " for " + key + " => " + game.completionStatus + " in Playnite but " + gameFoundStatus + " in RA");
+                }
+                else{
+                    Common.logger.debug(game.name + " for " + key + " => OK");
                 }
             }
         })
     });
-    console.log("\n");
-
     //Check if RA is correct
     gameListMap.forEach((list, key, map) => {
         let localGameList:LocalGameData[] | undefined = undefined;
@@ -232,16 +232,14 @@ export function compareRAData(localRaDataMap:Map<string, LocalGameData[]>):void{
             }
           })
           if(!localGameList){
-              console.log("Console " + key.name + " does not have any local data");
+              Common.logger.error("Console " + key.name + " does not have any local data");
               return;
           }
         list.forEach(game => {
             const gameFound = localGameList?.find(g => game.title == g.name);
             if(!gameFound){
-                console.log(game.title + " for " + key.name + " => In RA but not in Playnite");
+                Common.logger.error(game.title + " for " + key.name + " => In RA but not in Playnite");
             }
         })
     });
-
-    console.log("\n");
 }

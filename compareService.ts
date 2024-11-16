@@ -2,6 +2,7 @@ import * as CommonRA from "./common/commonRA"
 import * as CommonSteam from "./common/commonSteam"
 import * as CommonPS3 from "./common/commonPS3"
 import * as CommonPSVita from "./common/commonPSVita"
+import * as Common from "./common/common";
 import * as XLSX from "xlsx-js-style";
 
 export interface LocalGameData {
@@ -31,7 +32,7 @@ export function compareData(filepath:string){
          workbook = XLSX.readFile(filepath);
     }
     catch(err){
-        console.log(err);
+        Common.logger.error(err);
         return;
     }
     const sheet:XLSX.WorkSheet = workbook.Sheets["Sheet1"];

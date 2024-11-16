@@ -24,7 +24,7 @@ async function getPSVitaGames(): Promise<GameData[]> {
     let psVitaGames: GameData[] = [];
     const reader = rd.createInterface(fs.createReadStream("Files/PSVitaGames.txt"));
     for await (const l of reader) {
-        psVitaGames.push({name:l, status:Common.completionStatus.get("Not played")!})
+        psVitaGames.push({name:l, status:Common.completionStatus.get(Common.CompletionStatusType.NOT_PLAYED)!})
     }
     return psVitaGames
 }
@@ -48,7 +48,7 @@ async function getPSVitaMastered(): Promise<string[]> {
 }
 
 async function writePSVitaSheet(): Promise<GameData[]> {
-    console.log("Writing PSVita sheet...")
+    Common.logger.info("Writing PSVita sheet...")
     gameList = await getPSVitaGames()
     let localPSVitaBeatenGames: string[] = await getPSVitaBeaten()
     let localPSVitaMasteredGames: string[] = await getPSVitaMastered()
@@ -60,15 +60,15 @@ async function writePSVitaSheet(): Promise<GameData[]> {
         let isInLocalMastered = localPSVitaMasteredGames.find(n => n === ownedGame.name)
 
         if (isInLocalMastered) {
-            status = Common.completionStatus.get("Mastered")
+            status = Common.completionStatus.get(Common.CompletionStatusType.MASTERED)
         }
         else if (isInLocalBeaten) {
-            status = Common.completionStatus.get("Beaten")
+            status = Common.completionStatus.get(Common.CompletionStatusType.BEATEN)
         }
         else {
-            status = Common.completionStatus.get("Not played")
+            status = Common.completionStatus.get(Common.CompletionStatusType.NOT_PLAYED)
         }
-        console.log(ownedGame.name + " -> " + status?.name)
+        Common.logger.debug(ownedGame.name + " -> " + status?.name)
         gameDataArray.push({ "v": status?.name, "s": status?.style })
         gamesArray.push(gameDataArray)
     }
@@ -79,25 +79,27 @@ async function writePSVitaSheet(): Promise<GameData[]> {
 }
 
 export function comparePSVitaData(localPSVitaDataList:LocalGameData[]):void{
+    Common.logger.info("Comparing PSVita data");
+
     //Check if local is correct
     localPSVitaDataList.forEach(data => {
         const gameFound = gameList.find(g => g.name == data.name);
         if(!gameFound){
-            console.log(data.name + " for PSVita => In Playnite but not in PSVita");
+            Common.logger.error(data.name + " for PSVita => In Playnite but not in PSVita");
         }else{
             if(!compareCompletionStatus(data.completionStatus, gameFound.status.name)){
-                console.log(data.name + " for PSVita => " + data.completionStatus + " in Playnite but " + gameFound.status.name + " in PSVita");
+                Common.logger.error(data.name + " for PSVita => " + data.completionStatus + " in Playnite but " + gameFound.status.name + " in PSVita");
+            }
+            else{
+                Common.logger.debug(data.name + " for PSVita => OK");
             }
         }
     });
-    console.log("\n");
-
     //Check if PSVita is correct
     gameList.forEach(data => {
         const gameFound = localPSVitaDataList.find(g => data.name == g.name);
         if(!gameFound){
-            console.log(data.name + " for PSVita => In PSVita but not in Playnite");
+            Common.logger.error(data.name + " for PSVita => In PSVita but not in Playnite");
         }
     });
-    console.log("\n");
 }

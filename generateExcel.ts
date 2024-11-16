@@ -45,7 +45,7 @@ if (steamKey === "") {
     throw new Error("steamKey parameter is not defined")
 }
 if(compareFile === ""){
-    console.log("No compare file given")
+    Common.logger.error("No compare file given")
 }
 //Build authorization
 CommonRA.setAuth(RA.buildAuthorization({ userName: raUsername, webApiKey: raApiKey }));
@@ -77,7 +77,7 @@ promisesArray.push(CommonPSVita.getPSVitaPromise());
 
 //Promises array contains all promises that have to be parsed based on fullscan value
 Promise.all(promisesArray).then(async val => {
-    console.log("Writing main file...")
+    Common.logger.info("Writing main file...")
 
     const consoleDataSheet: XLSX.WorkSheet = await SheetService.createConsoleDataSheet();
     const completionDataSheet: XLSX.WorkSheet = SheetService.createCompletionDataSheet();

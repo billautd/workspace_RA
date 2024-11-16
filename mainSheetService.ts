@@ -6,7 +6,7 @@ import * as RA from "@retroachievements/api"
 
 export async function createConsoleDataSheet(): Promise<XLSX.WorkSheet> {
     //CONSOLE DATA SHEET
-    console.log("Creating console data sheet")
+    Common.logger.info("Creating console data sheet")
     let consoleDataArray: any[][] = [[{ t: "s", v: "Console", s: Common.headerStyle2 },
     { t: "s", v: "Number of games", s: Common.headerStyle2 },
     { t: "s", v: "Achievements", s: Common.headerStyle2 },
@@ -35,7 +35,7 @@ export async function createConsoleDataSheet(): Promise<XLSX.WorkSheet> {
 }
 
 export function createCompletionDataSheet(): XLSX.WorkSheet {
-    console.log("Creating completion data sheet")
+    Common.logger.info("Creating completion data sheet")
     //COMPLETION DATA SHEET
     let completionDataArray: any[][] = []
     //Setup RA + Steam data + PS3 data + PSVita data

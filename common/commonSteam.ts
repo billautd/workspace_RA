@@ -31,7 +31,7 @@ export function parseJsonToOwnedGame(json: any): OwnedGame {
         name: json.name,
         appId: json.appid,
         achievements: [],
-        status:Common.completionStatus.get("Not played")!
+        status:Common.completionStatus.get(Common.CompletionStatusType.NOT_PLAYED)!
     }
     return ownedGame;
 }
@@ -44,7 +44,7 @@ export function parseJsonToOwnedGamesResponse(json: any): OwnedGamesResponse {
     for (let game of json.response.games) {
         const ownedGame: OwnedGame = parseJsonToOwnedGame(game)
         gamesList.push(ownedGame)
-        console.log("PARSED GAME : " + ownedGame.name + ", " + ownedGame.appId)
+        Common.logger.debug("PARSED GAME : " + ownedGame.name + ", " + ownedGame.appId)
     }
     return gamesList;
 }
@@ -58,7 +58,7 @@ export interface AchievementData {
 }
 
 export function parseGameAchievementData(json: any, game: OwnedGame): OwnedGame {
-    if (json) {
+    if (Object.keys(json).length > 1) {
         const achievements: any[] = [...json];
         //Reset previous data, just in case
         let achievementData: AchievementData[] = []
@@ -91,17 +91,17 @@ async function getAchievements(steamId: string, steamApiKey: string, appId: numb
     try{
         textRes = await result.text();
         jsonRes = JSON.parse(textRes);
-        console.log("Text response to Steam achievements for game " + appId + " : " + textRes);
-        console.log("JSON response to Steam achievements for game " + appId + " : " + JSON.stringify(jsonRes, null, 4));
+        Common.logger.debug("Text response to Steam achievements for game " + appId + " : " + textRes);
+        Common.logger.debug("JSON response to Steam achievements for game " + appId + " : " + JSON.stringify(jsonRes, null, 4));
         retryIndex = 1;
     }catch(err){
-        console.log(err);
-        console.log("Error parsing JSON achievements result for game " + appId + " : " + textRes);
+        Common.logger.error(err);
+        Common.logger.error("Error parsing JSON achievements result for game " + appId + " : " + textRes);
         if(retryIndex > retryMax){
-            console.log("Out of retries");
+            Common.logger.error("Out of retries");
             throw err;
         }else{
-            console.log("Retrying " + retryIndex + "/" + retryMax + "...");
+            Common.logger.error("Retrying for " + appId + " => " + retryIndex + "/" + retryMax + "...");
             retryIndex++;
             return getAchievements(steamId, steamApiKey, appId);
         }
@@ -114,10 +114,10 @@ export async function getSteamPromise(steamId: string, steamApiKey: string): Pro
     let jsonRes:any = ""; 
     try{
         jsonRes = (await result.json()).response;
-        console.log("JSON response to Steam promise : " + JSON.stringify(jsonRes, null, 4));
+        Common.logger.debug("JSON response to Steam promise : " + JSON.stringify(jsonRes, null, 4));
     }catch(err){
-        console.log(err);
-        console.log("Error parsing JSON Steam promise result : " + result);
+        Common.logger.error(err);
+        Common.logger.error("Error parsing JSON Steam promise result : " + result);
     }
     
 
@@ -132,7 +132,7 @@ export async function getSteamPromise(steamId: string, steamApiKey: string): Pro
         } else {
             statusLog = ("Achievements : " + ownedGame.achievements.length);
         }
-        console.log("PROCESSING " + (i + 1) + "/" + jsonRes.games.length + " : " + ownedGame.name + " (" + ownedGame.appId + ") -> " + statusLog);
+        Common.logger.debug("PROCESSING " + (i + 1) + "/" + jsonRes.games.length + " : " + ownedGame.name + " (" + ownedGame.appId + ") -> " + statusLog);
         gameList.push(ownedGame)
     }
 
@@ -159,7 +159,7 @@ async function getLocalSteamMastered(): Promise<string[]> {
 
 
 async function writeSteamSheet(ownedGames: OwnedGamesResponse): Promise<OwnedGamesResponse> {
-    console.log("Writing Steam sheet...")
+    Common.logger.info("Writing Steam sheet...")
     let localSteamBeatenGames: string[] = await getLocalSteamBeaten()
     let localSteamMasteredGames: string[] = await getLocalSteamMastered()
     let gamesArray = [steamHeader]
@@ -173,22 +173,22 @@ async function writeSteamSheet(ownedGames: OwnedGamesResponse): Promise<OwnedGam
         let isMastered = !isNoAchievements && ownedGame.achievements.every((a) => a.achieved)
 
         if (isNoAchievements && !isInLocalBeaten && !isInLocalMastered) {
-            status = Common.completionStatus.get("No achievements");
+            status = Common.completionStatus.get(Common.CompletionStatusType.NO_ACHIEVEMENTS);
         }
         else if (isMastered || isInLocalMastered) {
-            status = Common.completionStatus.get("Mastered")
+            status = Common.completionStatus.get(Common.CompletionStatusType.MASTERED)
         }
         else if (isInLocalBeaten) {
-            status = Common.completionStatus.get("Beaten")
+            status = Common.completionStatus.get(Common.CompletionStatusType.BEATEN)
         }
         else if (isTried) {
-            status = Common.completionStatus.get("Tried")
+            status = Common.completionStatus.get(Common.CompletionStatusType.TRIED)
         }
         else {
-            status = Common.completionStatus.get("Not played")
+            status = Common.completionStatus.get(Common.CompletionStatusType.NOT_PLAYED)
         }
         ownedGame.status = status!;
-        console.log(ownedGame.appId + " -> " + (isNoAchievements ? "No achievements : " : "") + status?.name)
+        Common.logger.debug(ownedGame.appId + " -> " + (isNoAchievements ? "No achievements : " : "") + status?.name)
         gameDataArray.push({ "v": status?.name, "s": status?.style })
         let numAwarded: number;
         let totalAchievements: number;
@@ -241,45 +241,49 @@ export async function getAchievementsForGame(steamId:string, steamApiKey:string,
         }
     }
 
-    console.log("Earned")
+    Common.logger.info("Earned")
     earnedAchs.forEach(earnedAch =>{
-        console.log("\t" + earnedAch.title + " : " + earnedAch.description)
+        Common.logger.info("\t" + earnedAch.title + " : " + earnedAch.description)
     })
-    console.log("")
 
-    console.log("Not earned")
+    Common.logger.info("Not earned")
     notEarnedAchs.forEach(notEarnedAch =>{
-        console.log("\t" + notEarnedAch.title + " : " + notEarnedAch.description)
+        Common.logger.info("\t" + notEarnedAch.title + " : " + notEarnedAch.description)
     })
-    console.log("")
 
     if(getRandom){
         let id = Math.floor(Math.random() * (notEarnedAchs.length));
-        console.log("Random cheevo")
-        console.log("\t" + notEarnedAchs[id].title + " : " + notEarnedAchs[id].description);
+        Common.logger.info("Random cheevo")
+        Common.logger.info("\t" + notEarnedAchs[id].title + " : " + notEarnedAchs[id].description);
     }
 }
 
 export function compareSteamData(localSteamDataList:LocalGameData[]):void{
+    Common.logger.info("Comparing Steam data");
+
     //Check if local is correct
     localSteamDataList.forEach(data => {
+        if(compareCompletionStatus(data.completionStatus, "")){
+            //Cannot play, ignore
+            return;
+        }
         const gameFound = gameList.find(g => g.name == data.name);
         if(!gameFound){
-            console.log(data.name + " for Steam => In Playnite but not in Steam");
+            Common.logger.error(data.name + " for Steam => In Playnite but not in Steam");
         }else{
             if(!compareCompletionStatus(data.completionStatus, gameFound.status.name)){
-                console.log(data.name + " for Steam => " + data.completionStatus + " in Playnite but " + gameFound.status.name + " in Steam");
+                Common.logger.error(data.name + " for Steam => " + data.completionStatus + " in Playnite but " + gameFound.status.name + " in Steam");
+            }else{
+                Common.logger.debug(data.name + " for Steam => OK");
             }
         }
     });
-    console.log("\n")
 
     //Check if Steam is correct
     gameList.forEach(data => {
         const gameFound = localSteamDataList.find(g => data.name == g.name);
         if(!gameFound){
-            console.log(data.name + " for Steam => In Steam but not in Playnite");
+            Common.logger.debug(data.name + " for Steam => In Steam but not in Playnite");
         }
     });
-    console.log("\n")
 }
