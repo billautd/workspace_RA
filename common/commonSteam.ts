@@ -283,7 +283,7 @@ export function compareSteamData(localSteamDataList:LocalGameData[]):void{
     gameList.forEach(data => {
         const gameFound = localSteamDataList.find(g => data.name == g.name);
         if(!gameFound){
-            Common.logger.debug(data.name + " for Steam => In Steam but not in Playnite");
+            Common.logger.error(data.name + " for Steam => In Steam but not in Playnite");
         }
     });
 }

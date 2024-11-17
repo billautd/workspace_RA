@@ -29,20 +29,20 @@ export const psVitaDataList: LocalGameData[] = [];
 export function compareData(filepath:string){
     let workbook;
     try{
-         workbook = XLSX.readFile(filepath);
-    }
-    catch(err){
-        Common.logger.error(err);
-        return;
-    }
-    const sheet:XLSX.WorkSheet = workbook.Sheets["Sheet1"];
-    let i:number = 1;
-    while(sheet[nameColumn+i]){
-        const name:string = sheet[nameColumn+i].v;
-        const completionStatus:string = sheet[completionStatusColumn+i].v;
-        const platform:string = sheet[platformColumn+i].v;
-        const source:string = sheet[sourceColumn+i].v;
-        const data:LocalGameData = {name:name, completionStatus:completionStatus};
+         workbook = XLSX.readFile(filepath, {raw:true});
+        }
+        catch(err){
+            Common.logger.error(err);
+            return;
+        }
+        const sheet:XLSX.WorkSheet = workbook.Sheets["Sheet1"];
+        let i:number = 1;
+        while(sheet[nameColumn+i]){
+            const name:string = sheet[nameColumn+i].v;
+            const completionStatus:string = sheet[completionStatusColumn+i].v;
+            const platform:string = sheet[platformColumn+i].v;
+            const source:string = sheet[sourceColumn+i].v;
+            const data:LocalGameData = {name:name, completionStatus:completionStatus};
         if(source === steamSource){
             steamDataList.push(data)
         }else if(source === standaloneSource){
@@ -58,9 +58,9 @@ export function compareData(filepath:string){
             raDataMap.get(platform)?.push(data)
         }
         i++;
+        Common.logger.debug(data.name + " for " + source + ", Status : " + data.completionStatus);
     }
     CommonRA.compareRAData(raDataMap);
-    //Comparing steam data does not seem worth since it is imported directly through Playnite plugin
     CommonSteam.compareSteamData(steamDataList);
     CommonPS3.comparePS3Data(ps3DataList);
     CommonPSVita.comparePSVitaData(psVitaDataList);
@@ -68,6 +68,7 @@ export function compareData(filepath:string){
 
 export function compareCompletionStatus(playniteStatus:string, externalStatus:string):boolean{
     switch(playniteStatus){
+        //Ignore games currently playing
         case "1 - Playing":
             return true;
         case "2 - Not Played":
@@ -80,8 +81,9 @@ export function compareCompletionStatus(playniteStatus:string, externalStatus:st
             return externalStatus == "Mastered";
         case "6 - No Achievements & Not Interested":
             return externalStatus == "No achievements";
+        //Ignore cannot play because they're mostly software
         case "7 - Cannot Play":
-            return false;
+            return true;
         default:
             return false;
     }

@@ -51,27 +51,12 @@ if(compareFile === ""){
 CommonRA.setAuth(RA.buildAuthorization({ userName: raUsername, webApiKey: raApiKey }));
 
 
-/**************************************** */
-/**********        STEAM          ******* */
-/**************************************** */
 let promisesArray: Promise<any>[] = [];
 
-promisesArray.push(CommonSteam.getSteamPromise(steamId, steamKey));
-
-/**************************************** */
-/******    RETRO ACHIEVEMENTS       ***** */
-/**************************************** */
-promisesArray.push(CommonRA.getRAPromise(raUsername, raApiKey));
-
-/**************************************** */
-/******           PS3               ***** */
-/**************************************** */
-promisesArray.push(CommonPS3.getPS3Promise());
-
-/**************************************** */
-/******           PSVita               ***** */
-/**************************************** */
-promisesArray.push(CommonPSVita.getPSVitaPromise());
+promisesArray.push(CommonSteam.getSteamPromise(steamId, steamKey)); //Steam
+promisesArray.push(CommonRA.getRAPromise(raUsername, raApiKey)); //RA
+promisesArray.push(CommonPS3.getPS3Promise()); //PS3
+promisesArray.push(CommonPSVita.getPSVitaPromise()); //PSVita
 
 
 
