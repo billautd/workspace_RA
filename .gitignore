@@ -5,3 +5,6 @@
 *~lock*
 *.ods
 *.txt
+/logs
+*.log
+/Files
