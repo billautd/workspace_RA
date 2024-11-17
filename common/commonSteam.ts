@@ -58,7 +58,7 @@ export interface AchievementData {
 }
 
 export function parseGameAchievementData(json: any, game: OwnedGame): OwnedGame {
-    if (Object.keys(json).length > 1) {
+    if (Object.keys(json).length > 0) {
         const achievements: any[] = [...json];
         //Reset previous data, just in case
         let achievementData: AchievementData[] = []
