@@ -11,9 +11,9 @@ export interface LocalGameData {
 }
 
 const nameColumn:string = "A";
-const completionStatusColumn:string = "B";
-const platformColumn:string = "C";
-const sourceColumn:string = "D";
+const completionStatusColumn:string = "C";
+const platformColumn:string = "D";
+const sourceColumn:string = "E";
 
 const steamSource:string= "Steam";
 const raSource:string= "RetroAchievements";

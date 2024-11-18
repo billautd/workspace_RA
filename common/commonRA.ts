@@ -232,7 +232,7 @@ export function compareRAData(localRaDataMap:Map<string, LocalGameData[]>):void{
             }
           })
           if(!localGameList){
-              Common.logger.error("Console " + key.name + " does not have any local data");
+              Common.logger.debug("Console " + key.name + " does not have any local data");
               return;
           }
         list.forEach(game => {

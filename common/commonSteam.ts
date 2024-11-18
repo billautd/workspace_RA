@@ -133,6 +133,7 @@ export async function getSteamPromise(steamId: string, steamApiKey: string): Pro
             statusLog = ("Achievements : " + ownedGame.achievements.length);
         }
         Common.logger.debug("PROCESSING " + (i + 1) + "/" + jsonRes.games.length + " : " + ownedGame.name + " (" + ownedGame.appId + ") -> " + statusLog);
+        console.log("Steam => " + (i + 1) + "/" + jsonRes.games.length + " : " + ownedGame.name);
         gameList.push(ownedGame)
     }
 
