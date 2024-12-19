@@ -17,6 +17,7 @@ let retryIndex:number = 1;
 const retryMax:number = 3;
 
 let gameList:OwnedGamesResponse = [];
+let steamRemovedGames:string[] =[];
 
 //Data used to get achievement data from steam game
 export interface OwnedGame {
@@ -158,11 +159,22 @@ async function getLocalSteamMastered(): Promise<string[]> {
     return masteredGames
 }
 
+async function getLocalSteamRemoved(): Promise<string[]> {
+    let removedGames: string[] = [];
+    const reader = rd.createInterface(fs.createReadStream("Files/SteamRemoved.txt"));
+    for await (const l of reader) {
+        removedGames.push(l)
+    }
+    return removedGames
+}
+
 
 async function writeSteamSheet(ownedGames: OwnedGamesResponse): Promise<OwnedGamesResponse> {
     Common.logger.info("Writing Steam sheet...")
     let localSteamBeatenGames: string[] = await getLocalSteamBeaten()
     let localSteamMasteredGames: string[] = await getLocalSteamMastered()
+    steamRemovedGames = await getLocalSteamRemoved()
+
     let gamesArray = [steamHeader]
     for (let ownedGame of ownedGames) {
         const gameDataArray: any[] = [{ t: "s", v: ownedGame.name }]
@@ -262,10 +274,16 @@ export async function getAchievementsForGame(steamId:string, steamApiKey:string,
 export function compareSteamData(localSteamDataList:LocalGameData[]):void{
     Common.logger.info("Comparing Steam data");
 
+
     //Check if local is correct
     localSteamDataList.forEach(data => {
-        if(compareCompletionStatus(data.completionStatus, "")){
+        if(compareCompletionStatus(data.completionStatus, "Cannot play")){
             //Cannot play, ignore
+            return;
+        }
+        if(steamRemovedGames.find(removed => removed === data.name)){
+            //Removed game, ignore
+            Common.logger.debug(data.name + " removed from Steam");
             return;
         }
         const gameFound = gameList.find(g => g.name == data.name);
@@ -273,7 +291,11 @@ export function compareSteamData(localSteamDataList:LocalGameData[]):void{
             Common.logger.error(data.name + " for Steam => In Playnite but not in Steam");
         }else{
             if(!compareCompletionStatus(data.completionStatus, gameFound.status.name)){
-                Common.logger.error(data.name + " for Steam => " + data.completionStatus + " in Playnite but " + gameFound.status.name + " in Steam");
+                if(data.completionStatus === "2 - Not Played" && gameFound.status.name === "No achievements"){
+                    Common.logger.info(data.name + " for Steam => " + data.completionStatus + " in Playnite but " + gameFound.status.name + " in Steam");
+                }else{
+                    Common.logger.error(data.name + " for Steam => " + data.completionStatus + " in Playnite but " + gameFound.status.name + " in Steam");
+                }
             }else{
                 Common.logger.debug(data.name + " for Steam => OK");
             }
