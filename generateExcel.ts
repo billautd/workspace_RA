@@ -58,8 +58,6 @@ promisesArray.push(CommonRA.getRAPromise(raUsername, raApiKey)); //RA
 promisesArray.push(CommonPS3.getPS3Promise()); //PS3
 promisesArray.push(CommonPSVita.getPSVitaPromise()); //PSVita
 
-
-
 //Promises array contains all promises that have to be parsed based on fullscan value
 Promise.all(promisesArray).then(async val => {
     Common.logger.info("Writing main file...")
@@ -70,7 +68,7 @@ Promise.all(promisesArray).then(async val => {
     XLSX.utils.book_append_sheet(Common.wb, consoleDataSheet, "ConsoleData")
     XLSX.utils.book_append_sheet(Common.wb, completionDataSheet, "CompletionData")
 
-    XLSX.writeFile(Common.wb, "Files/Achievements.xlsx");
+    // XLSX.writeFile(Common.wb, "Files/Achievements.xlsx");
     if(compareFile !== ""){
         CompareService.compareData(compareFile);
     }

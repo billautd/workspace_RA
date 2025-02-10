@@ -39,9 +39,24 @@ export function compareData(filepath:string){
         let i:number = 1;
         while(sheet[nameColumn+i]){
             const name:string = sheet[nameColumn+i].v;
-            const completionStatus:string = sheet[completionStatusColumn+i].v;
-            const platform:string = sheet[platformColumn+i].v;
-            const source:string = sheet[sourceColumn+i].v;
+            const completionStatusCell = sheet[completionStatusColumn+i];
+            if(!completionStatusCell){
+                Common.logger.error("No completion status for " + name);
+                continue;                
+            }
+            const completionStatus:string = completionStatusCell.v;
+            const platformCell = sheet[platformColumn+i];
+            if(!platformCell){
+                Common.logger.error("No platform for " + name);
+                continue;                
+            }
+            const platform:string = platformCell.v;
+            const sourceCell = sheet[sourceColumn+i];
+            if(!sourceCell){
+                Common.logger.error("No source for " + name);
+                continue;
+            }
+            const source:string = sourceCell.v;
             const data:LocalGameData = {name:name, completionStatus:completionStatus};
         if(source === steamSource){
             steamDataList.push(data)
