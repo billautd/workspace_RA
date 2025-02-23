@@ -68,7 +68,7 @@ Promise.all(promisesArray).then(async val => {
     XLSX.utils.book_append_sheet(Common.wb, consoleDataSheet, "ConsoleData")
     XLSX.utils.book_append_sheet(Common.wb, completionDataSheet, "CompletionData")
 
-    // XLSX.writeFile(Common.wb, "Files/Achievements.xlsx");
+    XLSX.writeFile(Common.wb, "Files/Achievements.xlsx");
     if(compareFile !== ""){
         CompareService.compareData(compareFile);
     }
