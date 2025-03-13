@@ -42,18 +42,21 @@ export function compareData(filepath:string){
             const completionStatusCell = sheet[completionStatusColumn+i];
             if(!completionStatusCell){
                 Common.logger.error("No completion status for " + name);
+                i++;
                 continue;                
             }
             const completionStatus:string = completionStatusCell.v;
             const platformCell = sheet[platformColumn+i];
             if(!platformCell){
                 Common.logger.error("No platform for " + name);
+                i++
                 continue;                
             }
             const platform:string = platformCell.v;
             const sourceCell = sheet[sourceColumn+i];
             if(!sourceCell){
                 Common.logger.error("No source for " + name);
+                i++;
                 continue;
             }
             const source:string = sourceCell.v;
