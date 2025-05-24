@@ -171,21 +171,20 @@ export function getAchievementsForGame(gameId: number, getRandom: boolean):void{
                 notEarnedAchs.push(ach);
             }
         })
-        Common.logger.info("Earned")
-        earnedAchs.forEach(earnedAch =>{
-            Common.logger.info("\t" + earnedAch.title + " : " + earnedAch.description)
-        })
-
-        Common.logger.info("Not earned")
-        notEarnedAchs.forEach(notEarnedAch =>{
-            Common.logger.info("\t" + notEarnedAch.title + " : " + notEarnedAch.description)
-        })
-
         if(getRandom){
             let id = Math.floor(Math.random() * (notEarnedAchs.length));
-            Common.logger.info("Random cheevo")
-            Common.logger.info("\t" + notEarnedAchs[id].title + " : " + notEarnedAchs[id].description);
+            console.log("Random cheevo")
+            console.log("\t" + notEarnedAchs[id].title + " : " + notEarnedAchs[id].description);
         }
+        console.log("Earned")
+        earnedAchs.forEach(earnedAch =>{
+            console.log("\t" + earnedAch.title + " : " + earnedAch.description)
+        })
+
+        console.log("Not earned")
+        notEarnedAchs.forEach(notEarnedAch =>{
+            console.log("\t" + notEarnedAch.title + " : " + notEarnedAch.description)
+        })
     })
 }
 

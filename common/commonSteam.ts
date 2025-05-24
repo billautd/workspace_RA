@@ -121,7 +121,6 @@ export async function getSteamPromise(steamId: string, steamApiKey: string): Pro
         Common.logger.error("Error parsing JSON Steam promise result : " + result);
     }
     
-
     // for (let i = 0; i < 50; i++) {
     for (let i = 0; i < jsonRes.games.length; i++) {
         const ownedGame: OwnedGame = parseJsonToOwnedGame(jsonRes.games[i])

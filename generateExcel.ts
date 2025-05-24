@@ -53,8 +53,8 @@ CommonRA.setAuth(RA.buildAuthorization({ userName: raUsername, webApiKey: raApiK
 
 let promisesArray: Promise<any>[] = [];
 
-promisesArray.push(CommonSteam.getSteamPromise(steamId, steamKey)); //Steam
-promisesArray.push(CommonRA.getRAPromise(raUsername, raApiKey)); //RA
+//promisesArray.push(CommonSteam.getSteamPromise(steamId, steamKey)); //Steam
+//promisesArray.push(CommonRA.getRAPromise(raUsername, raApiKey)); //RA
 promisesArray.push(CommonPS3.getPS3Promise()); //PS3
 promisesArray.push(CommonPSVita.getPSVitaPromise()); //PSVita
 
@@ -68,7 +68,10 @@ Promise.all(promisesArray).then(async val => {
     XLSX.utils.book_append_sheet(Common.wb, consoleDataSheet, "ConsoleData")
     XLSX.utils.book_append_sheet(Common.wb, completionDataSheet, "CompletionData")
 
-    XLSX.writeFile(Common.wb, "Files/Achievements.xlsx");
+    const date:Date = new Date();
+    const dateString:string = date.getDay().toString().padStart(2, '0') + "_" + date.getMonth().toString().padStart(2, '0') + "_" + date.getFullYear();
+
+    XLSX.writeFile(Common.wb, "Files/Achievements_" + dateString + ".xlsx");
     if(compareFile !== ""){
         CompareService.compareData(compareFile);
     }
