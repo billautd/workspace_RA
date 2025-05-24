@@ -53,8 +53,8 @@ CommonRA.setAuth(RA.buildAuthorization({ userName: raUsername, webApiKey: raApiK
 
 let promisesArray: Promise<any>[] = [];
 
-//promisesArray.push(CommonSteam.getSteamPromise(steamId, steamKey)); //Steam
-//promisesArray.push(CommonRA.getRAPromise(raUsername, raApiKey)); //RA
+promisesArray.push(CommonSteam.getSteamPromise(steamId, steamKey)); //Steam
+promisesArray.push(CommonRA.getRAPromise(raUsername, raApiKey)); //RA
 promisesArray.push(CommonPS3.getPS3Promise()); //PS3
 promisesArray.push(CommonPSVita.getPSVitaPromise()); //PSVita
 
